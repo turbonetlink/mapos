@@ -1,0 +1,21 @@
+{
+	"title": "MAPOS - Sistema de Controle de Ordens de Serviço",
+	"extensions": [
+		"cURL",
+		"MySQLi",
+		"GD",
+		"zip",
+		"mbstring",
+		"dom",
+		"xml",
+		"zlib",
+		"iconv",
+		"json",
+		"openssl",
+		"fileinfo"
+	],
+  "database_file": "../banco.sql",
+  "writeable_directories": {
+    "files": "/updates"
+  }
+}

@@ -1,108 +1,58 @@
-  <head>
-    <title>MAPOS</title>
-    <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap-responsive.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/fullcalendar.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/main.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/blue.css" class="skin-color" />
-    <script type="text/javascript"  src="<?php echo base_url();?>js/jquery-1.10.2.min.js"></script>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
- 
-  <body style="background-color: transparent">
-
-
-
-      <div class="container-fluid">
-    
-          <div class="row-fluid">
-              <div class="span12">
-
-                  <div class="widget-box">
-                      <div class="widget-title">
-                          <h4 style="text-align: center">Relatório Financeiro</h4>
-                      </div>
-                      <div class="widget-content nopadding">
-
-                  <table class="table table-bordered">
-                      <thead>
-                          <tr>
-                              <th style="font-size: 1.2em; padding: 5px;">Cliente/Fornecedor</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Tipo</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Valor</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Vencimento</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Pagamento</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Forma de Pagamento</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Situação</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          <?php
-                          $totalReceita = 0;
-                          $totalDespesa = 0;
-                          $saldo = 0;
-                          foreach ($lancamentos as $l) {
-                              $vencimento = date('d/m/Y', strtotime($l->data_vencimento));
-                              $pagamento = date('d/m/Y', strtotime($l->data_pagamento));
-                              if($l->baixado == 1){$situacao = 'Pago';}else{ $situacao = 'Pendente';}
-                              if($l->tipo == 'receita'){ $totalReceita += $l->valor;} else{ $totalDespesa += $l->valor;}
-                              echo '<tr>';
-                              echo '<td>' . $l->cliente_fornecedor . '</td>';
-                              echo '<td>' . $l->tipo . '</td>';
-                              echo '<td>' . $l->valor . '</td>';
-                              echo '<td>' . $vencimento. '</td>';
-                              echo '<td>' . $pagamento. '</td>';
-                              echo '<td>' . $l->forma_pgto . '</td>';
-                              echo '<td>' . $situacao. '</td>';
-                              echo '</tr>';
-                          }
-                          ?>
-                      </tbody>
-                       <tfoot>
-                          <tr>
-                            <td colspan="5" style="text-align: right; color: green"> <strong>Total Receitas:</strong></td>
-                            <td colspan="2" style="text-align: left; color: green"><strong>R$ <?php echo number_format($totalReceita,2,',','.') ?></strong></td>
-                          </tr>
-                          <tr>
-                            <td colspan="5" style="text-align: right; color: red"> <strong>Total Despesas:</strong></td>
-                            <td colspan="2" style="text-align: left; color: red"><strong>R$ <?php echo number_format($totalDespesa,2,',','.') ?></strong></td>
-                          </tr>
-                          <tr>
-                            <td colspan="5" style="text-align: right"> <strong>Saldo:</strong></td>
-                            <td colspan="2" style="text-align: left;"><strong>R$ <?php echo number_format($totalReceita - $totalDespesa,2,',','.') ?></strong></td>
-                          </tr>
-                        </tfoot>
-                  </table>
-                  
-                  </div>
-                   
-              </div>
-                  <h5 style="text-align: right">Data do Relatório: <?php echo date('d/m/Y');?></h5>
-
-          </div>
-     
-
-
-      </div>
-</div>
-
-
-
-
-            <!-- Arquivos js-->
-
-            <script src="<?php echo base_url();?>js/excanvas.min.js"></script>
-            <script src="<?php echo base_url();?>js/bootstrap.min.js"></script>
-            <script src="<?php echo base_url();?>js/sosmc.js"></script>
-            <script src="<?php echo base_url();?>js/dashboard.js"></script>
-  </body>
-</html>
-
-
-
-
-
-
-
-
+<?php
+$totalReceita = 0;
+$totalDespesa = 0;
+foreach ($lancamentos as $l) {
+    $valor = $l->valor_desconto != 0 ? $l->valor_desconto : $l->valor;
+    if ($l->tipo == 'receita') {
+        $totalReceita += $valor;
+    } else {
+        $totalDespesa += $valor;
+    }
+}
+$this->load->view('relatorios/imprimir/partes/inicio', ['tituloDoc' => 'Relatório Financeiro']);
+?>
+    <table class="rel-tabela">
+        <thead>
+            <tr>
+                <th class="rel-th">Cliente/Fornecedor</th>
+                <th class="rel-th">Tipo</th>
+                <th class="rel-th">Valor</th>
+                <th class="rel-th">Desconto</th>
+                <th class="rel-th">Valor total</th>
+                <th class="rel-th">Vencimento</th>
+                <th class="rel-th">Pagamento</th>
+                <th class="rel-th">Forma de pgto.</th>
+                <th class="rel-th">Situação</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($lancamentos as $l) : ?>
+                <tr>
+                    <td class="rel-td"><?= e($l->cliente_fornecedor) ?></td>
+                    <td class="rel-td"><?= e($l->tipo) ?></td>
+                    <td class="rel-td">R$ <?= number_format($l->valor, 2, ',', '.') ?></td>
+                    <td class="rel-td"><?= e(($l->tipo_desconto == 'real' ? 'R$ ' : '') . number_format($l->desconto, 2, ',', '.') . ($l->tipo_desconto == 'porcento' ? ' %' : '')) ?></td>
+                    <td class="rel-td">R$ <?= number_format($l->valor_desconto != 0 ? $l->valor_desconto : $l->valor, 2, ',', '.') ?></td>
+                    <td class="rel-td"><?= e(date('d/m/Y', strtotime($l->data_vencimento))) ?></td>
+                    <td class="rel-td"><?= e(date('d/m/Y', strtotime($l->data_pagamento))) ?></td>
+                    <td class="rel-td"><?= e($l->forma_pgto) ?></td>
+                    <td class="rel-td"><?= e($l->baixado == 1 ? 'Pago' : 'Pendente') ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="rel-total text-right text-success" colspan="5">Total receitas:</td>
+                <td class="rel-total text-success" colspan="4">R$ <?= number_format($totalReceita, 2, ',', '.') ?></td>
+            </tr>
+            <tr>
+                <td class="rel-total text-right text-danger" colspan="5">Total despesas:</td>
+                <td class="rel-total text-danger" colspan="4">R$ <?= number_format($totalDespesa, 2, ',', '.') ?></td>
+            </tr>
+            <tr>
+                <td class="rel-total text-right" colspan="5">Saldo:</td>
+                <td class="rel-total" colspan="4">R$ <?= number_format($totalReceita - $totalDespesa, 2, ',', '.') ?></td>
+            </tr>
+        </tfoot>
+    </table>
+<?php $this->load->view('relatorios/imprimir/partes/fim'); ?>

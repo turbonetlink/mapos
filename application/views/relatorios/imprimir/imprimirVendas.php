@@ -1,85 +1,38 @@
-  <head>
-    <title>MAPOS</title>
-    <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap-responsive.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/fullcalendar.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/main.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/blue.css" class="skin-color" />
-    <script type="text/javascript"  src="<?php echo base_url();?>js/jquery-1.10.2.min.js"></script>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
-
-  <body style="background-color: transparent">
-
-
-
-      <div class="container-fluid">
-
-          <div class="row-fluid">
-              <div class="span12">
-
-                  <div class="widget-box">
-                      <div class="widget-title">
-                          <h4 style="text-align: center">Vendas</h4>
-                      </div>
-                      <div class="widget-content nopadding">
-
-                  <table class="table table-bordered">
-                      <thead>
-                          <tr>
-                              <th style="font-size: 1.2em; padding: 5px;">Cliente</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Total</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Data</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Vendedor</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          <?php
-                          foreach ($vendas as $c) {
-
-                              echo '<tr>';
-                              echo '<td>' . $c->nomeCliente . '</td>';
-                              echo '<td>' . $c->valorTotal. '</td>';
-                              echo '<td>' . date('d/m/Y',  strtotime($c->dataVenda)) . '</td>';
-                              echo '<td>' . $c->nome. '</td>';
-                              echo '</tr>';
-                          }
-                          ?>
-                      </tbody>
-                  </table>
-
-                  </div>
-
-              </div>
-                  <h5 style="text-align: right">Data do Relatório: <?php echo date('d/m/Y');?></h5>
-
-          </div>
-
-
-
-      </div>
-</div>
-
-
-
-
-            <!-- Arquivos js-->
-
-            <script src="<?php echo base_url();?>js/excanvas.min.js"></script>
-            <script src="<?php echo base_url();?>js/bootstrap.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.flot.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.flot.resize.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.peity.min.js"></script>
-            <script src="<?php echo base_url();?>js/fullcalendar.min.js"></script>
-            <script src="<?php echo base_url();?>js/sosmc.js"></script>
-            <script src="<?php echo base_url();?>js/dashboard.js"></script>
-  </body>
-</html>
-
-
-
-
-
-
-
+<?php
+$total = 0;
+foreach ($vendas as $v) {
+    $total += $v->valor_desconto != 0 ? $v->valor_desconto : $v->valorTotal;
+}
+$this->load->view('relatorios/imprimir/partes/inicio', ['tituloDoc' => ucfirst($title)]);
+?>
+    <table class="rel-tabela">
+        <thead>
+            <tr>
+                <th class="rel-th">#</th>
+                <th class="rel-th">Cliente</th>
+                <th class="rel-th">Vendedor</th>
+                <th class="rel-th">Data</th>
+                <th class="rel-th">Total</th>
+                <th class="rel-th">Desconto</th>
+                <th class="rel-th">Total com desconto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($vendas as $v) : ?>
+                <tr>
+                    <td class="rel-td text-center"><?= e($v->idVendas) ?></td>
+                    <td class="rel-td"><?= e($v->nomeCliente) ?></td>
+                    <td class="rel-td text-center"><?= e($v->nome) ?></td>
+                    <td class="rel-td text-center"><?= e(date('d/m/Y', strtotime($v->dataVenda))) ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($v->valorTotal, 2, ',', '.') ?></td>
+                    <td class="rel-td text-center"><?= e(($v->tipo_desconto == 'real' ? 'R$ ' : '') . $v->desconto . ($v->tipo_desconto == 'porcento' ? ' %' : '')) ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($v->valor_desconto != 0 ? $v->valor_desconto : $v->valorTotal, 2, ',', '.') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <tr>
+                <td class="rel-total text-right" colspan="6">TOTAL</td>
+                <td class="rel-total text-center">R$: <?= number_format($total, 2, ',', '.') ?></td>
+            </tr>
+        </tbody>
+    </table>
+<?php $this->load->view('relatorios/imprimir/partes/fim'); ?>

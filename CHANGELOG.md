@@ -1,0 +1,1309 @@
+# Changelog
+Todas as alterações serão documentadas neste arquivo
+
+Formato baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+e [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [5.1.0] - 2026-10-23
+
+Melhorias na ficha do cliente, no painel e no preenchimento de CEP e CNPJ. Sem migration nem variável nova no `.env`.
+
+### Added
+- Ficha do cliente: as abas Ordens de serviço e Vendas são paginadas (no tamanho de página das Configurações), e as OS e vendas mais antigas deixam de ficar inacessíveis. #3021 [@RamonSilva20](https://github.com/RamonSilva20)
+- Painel: o botão "Ocultar valores" / "Mostrar valores" esconde o saldo do mês, o "A receber", o balanço do ano e os valores dos lançamentos a vencer. A escolha fica no navegador. #3022 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Fixed
+- Cadastro de cliente (e cadastro rápido): trocar o CEP atualiza rua, bairro, cidade e estado (número e complemento digitados são mantidos), e a busca de CNPJ atualiza os campos com os dados da Receita. Antes, só preenchiam campos vazios. #3023 [@cabralwms](https://github.com/cabralwms)
+
+## [5.0.1] - 2026-10-23
+
+Correção do instalador. Sem migration nem variável nova no `.env`.
+
+### Fixed
+- Instalador: se a instalação falhasse no meio (erro de SQL, tempo esgotado), o arquivo `install/instalacao.lock` ficava para trás e toda nova tentativa mostrava "Já existe uma instalação em andamento". A trava agora é liberada mesmo se o PHP morrer, e o erro do banco aparece na tela. [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Changed
+- Tabela de suporte das versões (4.x, 5.x e a futura versão em Laravel) no README e no `SECURITY.md`. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [5.0.0] - 2026-10-22
+
+Primeira versão estável da v5. Exige PHP 8.5; leia o [guia de migração](docs/migracao-4x-para-5.md) e teste numa cópia antes de usar em produção. Quem está na 4.x deve atualizar para a 4.55.5 e migrar pelo guia: o botão "Atualizar Mapos" da 4.x não instala a v5. Sem migration nem variável nova no `.env` em relação à beta.3.
+
+### Fixed
+- PDF do relatório MEI saía com células pretas e o total errado. #3009 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cobranças (Asaas, Gerencianet e Mercado Pago) usam o total da OS e da venda: quantidade fracionada do serviço e serviço sem preço deixam de gerar boleto ou link com valor menor, e nenhum centavo se perde no arredondamento. #3014 [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [5.0.0-beta.3] - 2026-10-15
+
+Correção para quem importa o banco da 4.x numa v5 já instalada. Sem migration nem variável nova no `.env`.
+
+### Fixed
+- Banco com migrations pendentes (p. ex. v5 instalada e dump da 4.x importado) quebrava o painel logo depois do login com colunas inexistentes. Agora, enquanto houver migration pendente, o painel mostra uma tela com o botão "Atualizar banco de dados" (para quem tem `cSistema`; os demais veem um aviso para falar com o administrador) em vez de abrir a tela pedida, e as chamadas AJAX recebem 503; ao concluir, o painel abre. #3006 [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [5.0.0-beta.2] - 2026-10-15
+
+Correções e melhorias a partir dos testes da beta.1. Sem migration nem variável nova no `.env`.
+
+### Added
+- Visualização da OS mostra sempre Descrição do produto ou serviço, Defeito, Observações e Laudo técnico (campo vazio aparece como "Não informado") e ganha o botão "Editar" na seção, quando a OS pode ser editada e há permissão. #2997 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cadastro rápido de cliente em modal na OS e na venda: o rodapé "Cadastrar novo cliente" do campo Cliente abre um modal (tipo, CPF/CNPJ com "Buscar CNPJ", nome, contato, telefone, celular, e-mail, CEP com busca e endereço) sem sair da tela; ao salvar, o cliente já fica escolhido e nada do que foi preenchido se perde. Sem a senha da área do cliente (começa com o CPF ou CNPJ, como no cadastro normal) e com o link "Cadastro completo". Nova rota `clientes/cadastroRapido`, que exige `aCliente`; sem essa permissão o rodapé e o modal não aparecem. #3003 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Fixed
+- Lançamentos: o campo Cliente / fornecedor não mostrava as sugestões no Firefox (o `<datalist>` nativo não é exibido por ele). Agora usa o mesmo autocomplete da OS e da venda, com o mesmo estilo; o fornecedor continua podendo ser texto digitado. #2998 [@RamonSilva20](https://github.com/RamonSilva20)
+- A busca de CNPJ do formulário de cliente deixava de funcionar quando a BrasilAPI estava fora do ar. Agora tenta a Minha Receita e depois a CNPJ.ws (cada uma com tempo limite de 8 s), passando para a próxima quando a anterior falha (rede, tempo esgotado, 429, 5xx ou outro erro HTTP); um 400 ou 404 (CNPJ inexistente) encerra a busca. A ReceitaWS não volta porque não manda CORS. As duas origens novas entram no `connect-src` da CSP (`docs/cabecalhos-de-seguranca.md`). #2996 [@RamonSilva20](https://github.com/RamonSilva20)
+- Abas que não cabem na largura (Configurações, OS, ficha do cliente): a aba ativa vem para o centro ao carregar, a roda do mouse rola a faixa na horizontal e setas nas pontas rolam uma página, aparecendo só do lado em que há aba escondida; antes, com o mouse, as abas depois de "Pagamentos" só eram achadas clicando na aba "API" cortada. As setas ficam fora do foco do teclado (o Tab já chega a cada aba) e a rolagem respeita `prefers-reduced-motion`. #2995 [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [5.0.0-beta.1] - 2026-10-15
+
+Primeira beta pública da v5. Exige PHP 8.5; leia o [guia de migração](docs/migracao-4x-para-5.md) e teste numa cópia antes de usar em produção.
+
+### Added
+- README com capturas do painel da v5 (claro e escuro) e guia de migração atualizado com a delegação de permissões, o backup sem sessões, o e-mail da OS por POST, a exclusão de OS faturada, as planilhas e o Docker em localhost. #2859 [@RamonSilva20](https://github.com/RamonSilva20)
+- Preferência de tema por usuário: a escolha de claro, escuro ou sistema na topbar fica gravada no perfil (`usuarios.tema_modo`) e vale em qualquer navegador; sem escolha, vale o tema padrão das Configurações. #2854 [@RamonSilva20](https://github.com/RamonSilva20)
+- Autenticação em dois fatores (TOTP) opcional: ativação em Meu perfil com QR code (desenhado no servidor, sem serviço externo) e confirmação por código, 10 códigos de recuperação de uso único, login em dois passos com limite de tentativas, códigos que não valem duas vezes, segredo cifrado (AES-256-GCM), geração de novos códigos e desativação com a senha. O administrador pode exigir o 2FA por grupo de permissão e redefinir o 2FA de quem perdeu o celular; o login pela API passa a pedir o campo `totp` de quem o ativou. Veja `docs/dois-fatores.md`. #2876 [@RamonSilva20](https://github.com/RamonSilva20)
+- Busca global Ctrl/⌘ K: paleta com resultados por grupo (clientes, OS, produtos e serviços) enquanto se digita, navegação por ↑ ↓ Enter Esc, as mesmas permissões da busca completa e botão de busca na topbar do celular. Os atalhos F1 a F4 (clientes, produtos, serviços e OS) voltam, só para as telas que o usuário pode abrir. #2850 [@RamonSilva20](https://github.com/RamonSilva20)
+- Impressões (OS, vendas, garantias, cupons e área do cliente), PDFs dos relatórios e instalador em Tailwind: `assets/dist/imprimir.css`, `assets/dist/pdf.css` (achatado para o mPDF por `scripts/build-pdf-css.mjs`) e `install/assets/css/instalador.css`. #2960 [@RamonSilva20](https://github.com/RamonSilva20)
+- CI com lint, php-cs-fixer, PHPStan (com baseline) e `composer audit`. #2887 [@RamonSilva20](https://github.com/RamonSilva20)
+- PHPUnit com harness para o CodeIgniter 3 e testes iniciais. #2886 [@RamonSilva20](https://github.com/RamonSilva20)
+- Dependabot para GitHub Actions e Composer. #2890 [@RamonSilva20](https://github.com/RamonSilva20)
+- Helper `e()` para escape de saída nas views e checagem no CI que impede saída sem escape nova. #2897 [@RamonSilva20](https://github.com/RamonSilva20)
+- Tailwind CSS v4 com build via npm; o CSS compilado é commitado e quem só instala não precisa de Node. #2896 [@RamonSilva20](https://github.com/RamonSilva20)
+- Stack de JS da v5 em `assets/vendor` (Alpine.js, Tom Select, flatpickr, IMask, SweetAlert2, Chart.js 4 e FullCalendar 6). #2899 [@RamonSilva20](https://github.com/RamonSilva20)
+- Mapa central de permissões das rotas do painel (`config/permissions_map.php`), negando por padrão o que não estiver mapeado. #2898 [@RamonSilva20](https://github.com/RamonSilva20)
+- Design tokens, modo claro/escuro/sistema e cor de destaque, com migration que converte o `app_theme` atual. #2902 [@RamonSilva20](https://github.com/RamonSilva20)
+- Padrão de JS em módulos ES fora das views (`assets/js/modules`) e checagem de `<script>` inline novo. #2903 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cabeçalhos de segurança (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, HSTS em HTTPS) e CSP em modo report-only com endpoint de relatório. #2904 [@RamonSilva20](https://github.com/RamonSilva20)
+- Biblioteca de componentes PHP (`application/views/components`) com catálogo visível só em desenvolvimento. #2905 [@RamonSilva20](https://github.com/RamonSilva20)
+- Paginação das telas novas pelo componente `pagination`. #2906 [@RamonSilva20](https://github.com/RamonSilva20)
+- `DESIGN.md` como fonte de verdade da UI da v5 (cores, tipografia, componentes, estados, modo escuro e responsividade), referenciado no `AGENTS.md`, no `CONTRIBUTING.md` e no template de PR. #2920 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Changed
+- Páginas de erro no visual da v5 (404, erro geral, banco e 500), com os tokens do DESIGN.md, modo de cor do sistema e texto em português; sem detalhes técnicos (SQL, caminhos, mensagens) fora de development, e com `htmlspecialchars` no que sobra. Uma exceção não tratada em produção, que antes deixava a tela em branco, agora responde 500 com a página de erro e continua registrada no log. #2849 [@RamonSilva20](https://github.com/RamonSilva20)
+- `button-ghost-on-dark` segue o `DESIGN.md`: raio `xl` (12px) e padding `sm` (8px), mantendo os 44px de altura no celular. As demais variantes não mudam. #2929 [@RamonSilva20](https://github.com/RamonSilva20)
+- Acessibilidade AA (auditoria com axe-core em 29 telas, claro e escuro): anel de foco opaco (#3B82F6, 3,68:1 sobre branco; a 50% de alfa dava cerca de 1,8:1 e reprovava o WCAG 1.4.11, DESIGN.md atualizado), título da aba por tela ("Clientes — Map-OS"), menu do usuário com nome acessível igual ao texto visível, seletor de modo de cor no menu do usuário no celular (a topbar não estoura mais em 320 px), `prefers-reduced-motion` nos dois CSS, dias de outro mês e setas do calendário do painel com contraste e sem ícone sem texto, e a lista da paleta Ctrl+K fora da ordem de tabulação. #2853 [@RamonSilva20](https://github.com/RamonSilva20)
+- `phpoffice/phpword` 0.18 → 1.4 (relatório de receitas brutas do MEI) e `filp/whoops` movido para `require-dev`: o pacote de instalação não o traz mais, e o hook só o usa se a classe existir. `composer audit` segue no CI. #2877 [@RamonSilva20](https://github.com/RamonSilva20)
+- Produtos migrados para os componentes da v5, completando Clientes, Produtos e Serviços:
+  - listagem com busca e filtro de estoque baixo (pill "Baixo") e etiquetas em modal;
+  - formulário com unidades da tabela de medidas, preços com máscara e cálculo do preço de venda por markup ou margem;
+  - ficha com markup, margem e entrada de estoque.
+
+  A entrada de estoque passa a somar no banco (`estoque = estoque + ?`), em vez de confiar no estoque atual enviado pelo navegador, e não deixa o estoque ficar negativo. #2941 [@RamonSilva20](https://github.com/RamonSilva20)
+- Módulo de OS migrado para os componentes da v5 (#2842), em três etapas:
+  - listagem com filtros na URL, total por linha e exclusão em `modal-confirm`, que também apaga anotações, arquivos dos anexos e o lançamento da fatura. #2940 [@RamonSilva20](https://github.com/RamonSilva20)
+  - formulário único para cadastrar e editar os dados, com autocomplete acessível de cliente, técnico e termo de garantia. A OS faturada ou cancelada passa a ser bloqueada também no GET. #2942 [@RamonSilva20](https://github.com/RamonSilva20) #2947 [@RamonSilva20](https://github.com/RamonSilva20)
+  - tela da OS com abas. Produtos, serviços, anexos, anotações e desconto mudam sem recarregar a página. Também passam a existir:
+    - histórico de status (tabela `os_historico`);
+    - faturamento que preenche `os.lancamento`;
+    - PIX copia e cola gerado no servidor, sem o jsQR do rawgit, também na venda.
+
+    Os endpoints conferem no banco a OS, os itens, a quantidade devolvida ao estoque e o desconto. #2943 [@RamonSilva20](https://github.com/RamonSilva20)
+- Módulo de Vendas migrado para os componentes da v5 (#2843):
+  - listagem com filtros na URL, total da paginação que conta com os filtros (na v4 contava todas as vendas), total por linha calculado no SQL, garantia em `pill-status` e exclusão em `modal-confirm`, que apaga também o lançamento da fatura (a busca antiga nunca o encontrava). Venda cancelada passa a seguir a regra da faturada: só edita e exclui com `control_edit_vendas`, como na OS. #2945 [@RamonSilva20](https://github.com/RamonSilva20)
+  - formulário único para cadastrar e editar os dados e tela da venda numa página, com produtos e desconto sem recarregar, faturamento e cobrança em modal, PIX copia e cola gerado no servidor e impressões. Os endpoints conferem no banco a venda, os itens, a quantidade devolvida ao estoque e o desconto (na v4 vinham do navegador), e a venda faturada ou cancelada é barrada também no GET. Cancelar ou excluir a venda passa a devolver os produtos ao estoque (e reabrir baixa de novo), como na OS. O faturamento grava o lançamento e os dois vínculos (`vendas.lancamentos_id` e `lancamentos.vendas_id`). A regra `vendas` de validação exigia o campo `situacao`, que nenhuma tela enviava. #2947 [@RamonSilva20](https://github.com/RamonSilva20)
+- Lançamentos financeiros migrados para os componentes da v5 (#2844):
+  - listagem com período (dia, semana, mês...), vencimento, tipo, situação (pendente, pago, vencido) e busca na URL, cards de resumo e exclusão em `modal-confirm`;
+  - formulário único para receita e despesa, com desconto, baixa e parcelamento com entrada. O valor líquido, as parcelas (em centavos, sem sobra) e os vencimentos mensais são calculados no servidor.
+
+  Receitas e despesas passam a somar pelo mesmo critério de líquido, e a listagem mostra o mês atual por padrão (antes, só o dia). #2946 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cobranças migradas para os componentes da v5 (#2844): listagem com busca, situação e origem na URL, status do gateway como `pill-status` e detalhe em listas de definição. Atualizar, enviar por e-mail, confirmar, cancelar e excluir passam a ser POST com token CSRF (eram links GET) e voltam para uma tela do Map-OS, não para o Referer. Só URL http(s) do gateway vira link. #2946 [@RamonSilva20](https://github.com/RamonSilva20)
+- Painel inicial migrado para os componentes da v5 (#2847): cards de resumo (OS em andamento, orçamentos, vendas em aberto e saldo do mês), agenda das entregas de OS com FullCalendar 6 e filtro de status, balanço do ano e OS por status com Chart.js 4 (os dois saem do vendor local, sem CDN) e listas de OS em andamento, vendas em aberto, lançamentos a vencer e estoque baixo. Cada bloco só aparece com a permissão do módulo, e o balanço usa o mesmo líquido da listagem de lançamentos para receitas e despesas. #2950 [@RamonSilva20](https://github.com/RamonSilva20)
+- Usuários e Permissões migrados para os componentes da v5 (#2846): listagem de usuários com busca e situação (ativo, inativo, expirado), formulário único com CEP, senha de no mínimo 8 caracteres e endereço opcional, e grupos de permissão com a matriz ver/adicionar/editar/excluir por módulo. O usuário e o grupo editados vêm da URL, excluir usuário passa a ser POST com CSRF, e o administrador principal, o próprio usuário e o grupo do usuário logado não podem ser desativados nem excluídos. #2951 [@RamonSilva20](https://github.com/RamonSilva20)
+- Configurações, Emitente, Fila de e-mails e Auditoria migrados para os componentes da v5 (#2846). As configurações ficam em abas, e cada aba grava só os seus campos. O tema passa a ser Claro, Escuro ou Sistema. Senhas e tokens do `.env` não voltam mais para a tela, e em branco ficam como estão. O `.env` é reescrito linha a linha, com aspas quando precisa. Atualizar o banco, atualizar o Map-OS e limpar a auditoria passam a ser POST com CSRF. Trocar o logo do emitente apaga só o logo antigo, e não a pasta de uploads inteira. #2952 [@RamonSilva20](https://github.com/RamonSilva20)
+- Serviços migrados para os componentes da v5, nos padrões de listagem e de formulário: busca na URL, preço com máscara em reais (`valorDecimal()` no servidor aceita "1.234,56" e "1234.56") e exclusão em `modal-confirm`, que avisa que o serviço sai também das OS. #2939 [@RamonSilva20](https://github.com/RamonSilva20)
+- Ficha do cliente migrada para os componentes da v5:
+  - abas por link (dados, ordens de serviço e vendas), com contadores;
+  - status das OS e das vendas em `pill-status` (`status_helper`: `osStatusPill()`, `vendaFaturadaPill()`, `dinheiro()`, `dataBr()`);
+  - exclusão confirmada em `modal-confirm`.
+
+  As ações da aba de vendas passam a seguir as permissões de vendas; antes conferiam `vOs`/`eOs`. #2937 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cadastro e edição de clientes num só formulário da v5, que define o padrão dos formulários. A validação acontece no navegador e no servidor, com o erro em cada campo e mensagens em português (`MY_Controller::validarFormulario()`). Inclui máscaras de CPF/CNPJ (com o alfanumérico), telefone e CEP, e preenchimento pelo CEP (ViaCEP) e pelo CNPJ (BrasilAPI), só nos campos vazios. O botão mostra o carregamento e o sucesso aparece em toast. A edição usa o id da URL, e não um campo do POST. #2936 [@RamonSilva20](https://github.com/RamonSilva20)
+- Listagem de clientes e fornecedores migrada para os componentes da v5, sem o CSS e o JS legados. A busca e o filtro de tipo ficam na URL e são mantidos na paginação, que agora conta só o que a busca encontra. A tela tem estados vazios distintos, ações por linha com ícones e exclusão confirmada em `modal-confirm`. Ela define o padrão das listagens (`listagemFiltros()`, `MY_Controller::permite()`, filtros em `paginacao()` e `data-valor-*` no `modal.js`). Também entram o componente `link` e botões pequenos com 44px no celular. #2935 [@RamonSilva20](https://github.com/RamonSilva20)
+- Versão mínima do PHP alinhada em 8.5. #2882 [@RamonSilva20](https://github.com/RamonSilva20)
+- `release.yml` gera um zip limpo e publica o SHA256. #2889 [@RamonSilva20](https://github.com/RamonSilva20)
+- Cookies e sessão seguros por padrão: `Secure` automático em HTTPS, `HttpOnly`, `SameSite=Lax` e destruição do ID anterior ao regenerar a sessão. Valores explícitos no `.env` continuam valendo. #2900 [@RamonSilva20](https://github.com/RamonSilva20)
+- Novo login do painel com Tailwind, componentes e módulo JS, sem jQuery e sem particles. #2907 [@RamonSilva20](https://github.com/RamonSilva20)
+- Novo layout do painel (sidebar recolhível, topbar com busca e alternância de tema, flash como toast), com modo legado para as telas ainda não migradas. #2908 [@RamonSilva20](https://github.com/RamonSilva20)
+- Boxicons servido de `assets/vendor` em vez do unpkg. #2909 [@RamonSilva20](https://github.com/RamonSilva20)
+- Tokens do `DESIGN.md` no `tokens.css`: laranja `#F37338` como cor de ação única (rótulo escuro), paleta de status com `-ink`/`-soft` nos modos claro e escuro, modo escuro do painel na paleta violeta, borda de campo com contraste 3:1, escala tipográfica, raios e elevação. A paleta padrão do Tailwind e a escala de cor de destaque foram removidas. #2921 [@RamonSilva20](https://github.com/RamonSilva20)
+- Fontes Rubik (interface) e Space Grotesk (títulos de destaque) servidas de `assets/vendor/fonts` via `@fontsource`, sem CDN, nos subconjuntos latin e latin-ext. #2923 [@RamonSilva20](https://github.com/RamonSilva20)
+- Ícones Lucide num sprite SVG gerado pelo `build-vendor` só com os ícones usados (`assets/src/icones.json`), com o helper `icon()` no PHP e `criarIcone()` no JS. A moldura, os componentes e o login do painel deixam o Boxicons, que passa a ser carregado só no modo legado. #2924 [@RamonSilva20](https://github.com/RamonSilva20)
+- Biblioteca de componentes conforme o `DESIGN.md`: botões em caixa alta com as variantes outline, inverted e ghost-on-dark (`secondary` virou `outline`), campos com borda de 3:1, foco com anel azul e erro com ícone, e os componentes novos `pill-status`, `checkbox`, `radio`, `switch`, `kpi-card`, `tabs` e `modal-confirm`. `table` virou `data-table` (cartões abaixo de 640px), e o `badge` passou a ser só para contadores. #2925 [@RamonSilva20](https://github.com/RamonSilva20)
+- Sidebar e topbar conforme o `DESIGN.md`: marca com a versão, menu em seções (Operação, Financeiro, Sistema), item ativo com barra laranja, fundo e texto em negrito, cartão do usuário com iniciais quando não há foto, busca com atalho Ctrl+K/⌘K e espaço na topbar para a ação principal da tela (`topbar_acao`). As abas esmaecem na borda quando há mais abas para rolar. #2926 [@RamonSilva20](https://github.com/RamonSilva20)
+- Logins do painel e da área do cliente como superfícies de entrada do `DESIGN.md`: fundo escuro com estrelas, título com destaque lima, card escuro com campos claros e ENTRAR com halo, e cada login aponta para o outro na barra do topo. O login do cliente deixa o Bootstrap, o jQuery e o script inline e passa a usar o mesmo módulo do painel. As telas de entrada não seguem mais o modo de cor do painel. #2927 [@RamonSilva20](https://github.com/RamonSilva20)
+- Ilustrações-adesivo em SVG (chave, celular, notebook, caixa de entrega e técnico) nas telas de entrada, com fonte em `assets/src/stickers` e saída otimizada pelo svgo (`npm run build:stickers`). #2928 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Security
+- Delegação e backup (#2879): quem tem `cUsuario` ou `cPermissao` só concede e redefine o que ele mesmo tem (só o administrador concede tudo), o backup não leva `ci_sessions`, tokens e limites de login (a linha de `ci_sessions` é o cookie de sessão de quem está logado), ativar o 2FA pede a senha e trocar e-mail ou senha na área do cliente pede a senha atual. [@RamonSilva20](https://github.com/RamonSilva20)
+- Segunda leva da revisão de segurança: planilhas XLSX neutralizam fórmulas (`=HYPERLINK(...)` num nome); relatórios MEI usam arquivos temporários fora do webroot, apagados mesmo se a geração falhar; OS com pagamento já baixado não é excluída, e a exclusão da fatura só remove lançamentos em aberto; e-mail da OS só por POST e com permissão de editar; valores com `$` escapados no `.env`; portas do Docker só em 127.0.0.1 e sem `PMA_ARBITRARY`; `release.yml` valida o nome da tag (sem interpolar no script) e deixa `tests`, `docker` e `scripts` fora do zip. #2879 [@RamonSilva20](https://github.com/RamonSilva20)
+- CSP em **enforce** por padrão, sem `unsafe-inline` nem `unsafe-eval`: `APP_CSP=enforce|report-only|off` (o antigo `APP_CSP_REPORT_ONLY` ainda vale quando `APP_CSP` não existe). O `window.print()` das 8 views de impressão foi para `assets/js/imprimir.js` (zero scripts inline nas views); o único estilo gerado por JavaScript, o `<style>` do FullCalendar da agenda, usa um nonce por requisição (`<meta name="csp-nonce">`, só no `style-src`); a ReceitaWS saiu do `connect-src`. Auditoria de todas as telas com a política ligada, sem outras violações. Veja `docs/cabecalhos-de-seguranca.md`. #2878 [@RamonSilva20](https://github.com/RamonSilva20)
+- `npm audit` sem alertas: `@parcel/watcher` 2.6.0 (que não usa mais `micromatch` e `braces`) via `overrides` no `package.json`, enquanto o `@tailwindcss/cli` fixa a 2.5.1; o CI passa a rodar `npm audit --audit-level=high`. O CSS compilado não muda. #2930 [@RamonSilva20](https://github.com/RamonSilva20)
+- Atualizador do Map-OS por releases com verificação de integridade: usa a última release com tag (não mais o branch `master`), baixa o zip e o `.sha256` do `release.yml` só do endereço oficial da release, com TLS verificado, e descarta o zip se o SHA256 não conferir; extrai recusando caminhos inseguros, links simbólicos e zip bomba; guarda backup dos arquivos trocados e restaura tudo se algo falhar; nunca toca no `.env`, nos uploads, nos logs nem em `install/`. A nova tela `mapos/atualizacao` mostra o changelog da versão antes de aplicar. Veja `docs/atualizacao.md`. #2871 [@RamonSilva20](https://github.com/RamonSilva20)
+- Autenticação da API modernizada, sem quebrar os apps atuais: `firebase/php-jwt` pelo Composer no lugar da cópia em `third_party`, claim padrão `exp` (o `API_TIME` segue por compatibilidade), refresh token de uso único e revogável (`POST /api/v1/refresh` e `/logout`, tabela `api_refresh_tokens`, revogado na troca de senha ou desativação), usuário e permissão consultados no banco a cada requisição (não ficam mais fixos no token), CORS (`API_CORS_ORIGINS`) e limite de requisições por IP (`API_RATE_LIMIT`, 429 com `Retry-After`) em `config/rest.php`. `GET /api/v1/reGenToken` foi removido (renovava token vencido sem senha nem refresh token). Veja `docs/api-autenticacao.md`. #2869 [@RamonSilva20](https://github.com/RamonSilva20)
+- Instalador bloqueado depois da instalação (`application/.env` ou `install/instalado.lock`): `index.php` e `do_install.php` respondem 403 antes de ler o formulário ou abrir conexão com o banco (o arquivo não serve mais de testador de conexão), `settings.json` e as views deixam de ser públicas (Apache e nginx), a instalação roda uma vez por vez, o formulário é validado (sem quebra de linha, API por allowlist, senha mínima de 8) e `.env` e SQL de carga escapam os valores. O painel avisa quem administra enquanto a pasta `install/` existir e o atualizador não a traz de volta. #2874 [@RamonSilva20](https://github.com/RamonSilva20)
+- Limite de tentativas de login no painel, na área do cliente e nas duas APIs: depois de 5 falhas para o mesmo e-mail (ou 20 do mesmo IP), bloqueio temporário de 1 minuto que dobra a cada nova falha, até 1 hora. A mensagem é a mesma para os dois casos, cada bloqueio vai para a auditoria e a tabela `login_attempts` guarda só um HMAC do e-mail e do IP, com a `encryption_key` da instalação. A API do cliente deixa de responder "Usuário não encontrado", e o painel só informa conta expirada depois da senha certa. #2931 [@RamonSilva20](https://github.com/RamonSilva20)
+
+- Token de recuperação de senha da área do cliente guardado só como hash SHA-256 (busca pelo hash e conferência com `hash_equals`), com 32 bytes aleatórios, validade de 1 hora (antes 24 horas) e uso único; um pedido novo invalida os anteriores do mesmo e-mail. Uma migration invalida os tokens pendentes, que estavam em texto claro. #2934 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Removed
+- Bootstrap 2, 3 e 5.3, matrix-style, Font Awesome, jQuery (do instalador) e as imagens do tema antigo; as fontes do captcha foram para `assets/fonts/captcha`. #2960 [@RamonSilva20](https://github.com/RamonSilva20)
+- Frontend legado do painel: Bootstrap 2, jQuery e jQuery UI, tema Matrix, `tema-*.css`, Trumbowyg, wysihtml5, Select2, DataTables, jqPlot, Flot, Highcharts, Boxicons, SweetAlert v1 e o modo legado do layout (`legacy_assets`). As impressões e os PDFs mantêm o CSS próprio. #2855 [@RamonSilva20](https://github.com/RamonSilva20)
+- Seletor de cor de destaque (`app_tema_destaque`, `data-accent`): o `DESIGN.md` define uma cor de ação única, e o tema passa a ser só o modo claro, escuro ou sistema. Uma migration remove a configuração e o `down()` a recria a partir do `app_theme`. #2922 [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Fixed
+- Pastas ocultas (`.git`, `.github`, `.idea`) respondiam 200 no Apache com `.htaccess` (só arquivos com ponto eram bloqueados); agora dão 403 no `.htaccess`, no nginx do Docker e nas receitas de `docs/servidor-web.md`, com o `.well-known` liberado. #2858 [@RamonSilva20](https://github.com/RamonSilva20)
+- A migration `move_uploads_to_storage` concluía sem erro nem log quando o `STORAGE_PATH` não existia ou não era gravável; agora para com a mensagem (na tela "Atualizar banco" e em `tools migrate`), não conclui, registra no log o que não pôde mover e termina o que faltou ao rodar de novo. Anexo sem arquivo no disco aparece como "Arquivo não encontrado" na OS e na área do cliente. #2858 [@RamonSilva20](https://github.com/RamonSilva20)
+- A versão exibida (`app_version`) na v5 era a 4.55.1, o que fazia o atualizador oferecer a release 4.x como atualização; passa a `5.0.0-alpha`. #2858 [@RamonSilva20](https://github.com/RamonSilva20)
+- Instalações criadas pelas migrations tinham preço de produtos e serviços e saldo das contas sem casas decimais (`DECIMAL(10)`), porque a migration base declarava `'constraint' => 10, 2`. A base foi corrigida, e uma migration nova ajusta as colunas para `DECIMAL(10,2)`. #2939 [@RamonSilva20](https://github.com/RamonSilva20)
+- Backup do banco não tenta mais gravar o arquivo numa URL (`base_url() . 'backup/backup.zip'`), o que falhava sempre e, se funcionasse, deixaria o dump numa pasta pública: agora só é baixado, com nome `backup-AAAA-MM-DD-HHhMM.zip` (antes usava o mês no lugar dos minutos e `:`, inválido no Windows). #2933 [@RamonSilva20](https://github.com/RamonSilva20)
+- Erros 500 do calendário do painel sem datas (agora valida `start`/`end` e responde 400 em JSON), de `os/visualizar` com OS inexistente (agora redireciona com aviso, como o `editar`) e dos autocompletes de Garantias (chamavam um model não carregado e não devolviam JSON sem resultados). #2932 [@RamonSilva20](https://github.com/RamonSilva20)
+- Usuário com `permissoes_id` inexistente recebe negação de acesso em vez de erro fatal. #2891 [@RamonSilva20](https://github.com/RamonSilva20)
+- Conta sem data de expiração volta a conseguir entrar. #2892 [@RamonSilva20](https://github.com/RamonSilva20)
+- `date_format()` sem argumento e data inválida na entrada de receita parcelada. #2893 [@RamonSilva20](https://github.com/RamonSilva20)
+- Data com estouro no filtro de vencimento não consulta mais a janela errada. #2894 [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [4.55.1] - 2026-10-06
+
+### Added
+- Adicionado arquivo `AGENTS.md` com orientações para agentes de IA. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Fixed
+- Correção de SQL injection nos filtros de lançamentos financeiros. [@RamonSilva20](https://github.com/RamonSilva20)
+- Página de erro detalhada (Whoops) agora só é exibida em ambiente de desenvolvimento. [@RamonSilva20](https://github.com/RamonSilva20)
+- Correção que permitia renovar indefinidamente um token expirado da API. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adicionadas verificações de permissão ausentes na listagem de OS, na pesquisa global e nos autocompletes. [@RamonSilva20](https://github.com/RamonSilva20)
+- Nomes de anexos imprevisíveis e bloqueio de execução de scripts e de listagem nas pastas de upload. [@RamonSilva20](https://github.com/RamonSilva20)
+- Token de recuperação de senha da área do cliente gerado com `random_bytes()`. [@RamonSilva20](https://github.com/RamonSilva20)
+- Verificação do certificado TLS nas requisições do atualizador. [@RamonSilva20](https://github.com/RamonSilva20)
+- Chave de criptografia gerada com `random_bytes()` no instalador. [@RamonSilva20](https://github.com/RamonSilva20)
+- Correção da busca na API de produtos, serviços e clientes. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adequação para exibir conteúdo de forma segura e evitar possível XSS nas telas de visualização. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Correção na geração de captcha e na ordem de carregamento de funções JS no cadastro de cliente. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.55.0] - 2026-09-25
+
+### Added
+- Adicionado política de segurança (`SECURITY.md`) e template de Pull Request. [Janei Araujo](https://github.com/jaaraujo)
+- Adicionado guia de contribuição (`CONTRIBUTING.md`). [Janei Araujo](https://github.com/jaaraujo)
+
+### Changed
+- Atualizado dependência `guzzlehttp/guzzle` para 7.15.2. [@dependabot[bot]](https://github.com/apps/dependabot)
+- Correção do gráfico de estrelas no README. [PingouinFerreux](https://github.com/PingouinFerreux)
+
+### Fixed
+- Correção na auditoria da área do cliente. [@cabralwms](https://github.com/cabralwms)
+- Evita reexecução de migrations em instalação nova. [Janei Araujo](https://github.com/jaaraujo)
+- Correção de exposição de dados, IDORs, falhas de autenticação, CSRF/Sessão e vistorias de segurança. [@Fesantt](https://github.com/Fesantt)
+- Prevenção de escrita arbitrária de arquivo em relatórios (`receitasBrutasRapid` e `receitasBrutasCustom`). [@Fesantt](https://github.com/Fesantt)
+
+## [4.54.0] - 2026-07-22
+
+### Changed
+- Atualizado dependência guzzlehttp/guzzle. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Atualizado dependência guzzlehttp/psr7. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Atualizado dependência setasign/fpdi. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Fixed
+- Correção no erro de cálculo ao editar lançamento. [@barretowiisk](https://github.com/barretowiisk)
+- Substituição de unserialize() por json_decode() em permissões e fila de emails. [@allanbarcelos](https://github.com/allanbarcelos)
+- Correção de SQL injection em Cobrancas_model (getByOs e getByVendas). [@allanbarcelos](https://github.com/allanbarcelos)
+- Substituição de md5(time()) por random_bytes() na geração do captcha. [@Fesantt](https://github.com/Fesantt)
+- Correção de Bug ao Atualizar Status cobrança. [@cabralwms](https://github.com/cabralwms)
+- Correção em DataTables para exibir quantidade de registros por página configurado no sistema. [@cezargf](https://github.com/cezargf)
+- Correção di layout e area do cliente mobile. [@cabralwms](https://github.com/cabralwms)
+- Correção em painel. [@cabralwms](https://github.com/cabralwms)
+- Correção em permissoes de produtos em controller de OS. [@cabralwms](https://github.com/cabralwms)
+
+## [4.53.2] - 2026-02-19
+### Fixed
+- Ajuste para não ficar gerando logs de erro por conta da constante E_STRICT. [@cabralwms](https://github.com/cabralwms)
+
+## [4.53.1] - 2026-01-28
+### Fixed
+- Corrigido problema com XSS e RBAC. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.53.0] - 2026-01-25
+### Added
+- Adequação para habilitar/desabilitar a página de erro do whoops de acordo com variável de ambiente e fazer blacklist de todas as variáveis do arquivo env. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado em validação de IDS em Os, Cliente, Serviço, Produtos, Venda, Termo de Garantia, Arquivo e Usuário. [@viniciusvams](https://github.com/viniciusvams)
+- Adicionado suporte ao novo modelo de CNPJ alfanumérico. [@viniciusvams](https://github.com/viniciusvams)
+- Adicionado validação de email duplicado em Clientes. [@lukasabino](https://github.com/lukasabino)
+
+### Changed
+- Atualizado versão do PHP (versão mínima 8.4 e atualizado versão com docker para 8.5). [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Atualização em auto instalador Windows/Linux. [@barretowiisk](https://github.com/barretowiisk)
+- Atualizado SDK do Mercado Pago. [@barretowiisk](https://github.com/barretowiisk)
+
+### Fixed
+- Correção em campo contato na área do cliente. [@cabralwms](https://github.com/cabralwms)
+- Correção em paginação em vendas. [@cabralwms](https://github.com/cabralwms)
+- Correção em possíveis problemas com datas em OS. [@cabralwms](https://github.com/cabralwms)
+- Correção em adicionar fornecedor. [@cabralwms](https://github.com/cabralwms)
+- Correção em dockerfile. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Correção em dashboard e no calendários de OS. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em termos de garantia. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em botão voltar em área do cliente. [@barretowiisk](https://github.com/barretowiisk)
+- Padronização em layout de vendas. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em número do WhatsApp em vendas. [@cabralwms](https://github.com/cabralwms)
+- Correçao do valor de desconto por porcentagem. [@cabralwms](https://github.com/cabralwms)
+- Correção em total de produtos e serviços na API. [@cabralwms](https://github.com/cabralwms)
+- Correção em observações em vendas. [@barretowiisk](https://github.com/barretowiisk)
+- Correção de quebra de linha em impressões. [@juliolobo](https://github.com/juliolobo)
+- Correção em background de textarea e centralização de botões. [@juliolobo](https://github.com/juliolobo)
+- Correção do problema ao cancelar/excluir cobrança do ASAAS e do Mercado Livre. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em uso do pacote Whoops. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Correção em credenciais de gateways de pagamento. [@cezargf](https://github.com/cezargf)
+- Correções de frontend. [MilsonElias](https://github.com/MilsonElias)
+- Correções em Mine Controller. [@Fesantt](https://github.com/Fesantt)
+- Correções em validação de email duplicado. [@Fesantt](https://github.com/Fesantt)
+- Correções em funções JS. [@Fesantt](https://github.com/Fesantt)
+- Correções na API de OS. [@Fesantt](https://github.com/Fesantt)
+- Correção em impressão de garantia. [@Wilmerson](https://github.com/willph)
+
+## [4.52.0] - 2025-02-01
+### Added
+- Action de release no GitHub. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.51.0] - 2025-02-01
+### Fixed
+- Adequação para variáveis de conexão do banco de dados funcionarem com caracteres especiais. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Atualizado dependências e versão mínima de PHP para 8.3. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.50.0] - 2025-01-25
+### Added
+- Campo contato no cadastro na área do cliente. [@cabralwms](https://github.com/cabralwms)
+
+## [4.49.1] - 2025-01-04
+### Fixed
+- Correção Faturar Parcelado Lançamentos. [@cabralwms](https://github.com/cabralwms)
+
+## [4.49.0] - 2024-12-05
+### Added
+- Implementado endpoints da área do cliente na API json. [@sarkozin](https://github.com/sarkozin)
+
+### Fixed
+- Correção em status da integração com a EFI. [@cabralwms](https://github.com/cabralwms)
+- Correção em impressão na área do cliente. [@cabralwms](https://github.com/cabralwms)
+
+### Changed
+- Atualização na lib symfony-var-dumper. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.48.0] - 2024-11-17
+### Added
+- Adicionando a hora as impressões de OS e Vendas. [@fwsund](https://github.com/fwsund)
+
+### Fixed
+- Mudando permissão para visualizarOs para gerar o zapnumber. [@juliolobo](https://github.com/juliolobo)
+- Correção auditoria para salvar com nome do cliente ao fazer login area do cliente. [@cabralwms](https://github.com/cabralwms)
+- Corrigindo nome do cliente para Responsável. [@cabralwms](https://github.com/cabralwms)
+- Corrigindo faturar com valores em Vendas. [@cabralwms](https://github.com/cabralwms)
+- Correções Lançamentos OS E Vendas. [@cabralwms](https://github.com/cabralwms)
+- Corrigindo campo que não existe. [@cabralwms](https://github.com/cabralwms)
+- Corrigido margem de preço em produtos. [@sidneyferracinjr](https://github.com/sidneyferracinjr)
+- Ajuste no texto de Parceria. [@barretowiisk](https://github.com/barretowiisk)
+- Ajuste Layout Cadastre-se (Área do Cliente). [@barretowiisk](https://github.com/barretowiisk)
+- Correção de Bugs e Padronização Vendas e Area Cliente. [@cabralwms](https://github.com/cabralwms)
+- Update .htaccess. [@Wilmerson](https://github.com/willph)
+- Reorganizar Status das OS para um fluxo mais natural. [@exosinfor](https://github.com/exosinfor)
+
+## [4.47.0] - 2024-07-22
+### Changed
+- Mudança de licença MIT para Apache 2.0. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.46.0] - 2024-07-20
+### Added
+- Desenvolvimento de API para o APP. [@juliolobo](https://github.com/juliolobo)
+- Adicionado opção de alterar configurações da API no menu configurações. [@juliolobo](https://github.com/juliolobo)
+- Melhorias no setor de vendas para admin. [@cabralwms](https://github.com/cabralwms)
+- Adicionadas configurações dos gateways de pagamento e de email no menu configurações. [@juliolobo](https://github.com/juliolobo)
+- Padronizando area do cliente com vendas. [@cabralwms](https://github.com/cabralwms)
+- Adicionado campo situação nos usuarios. [@cabralwms](https://github.com/cabralwms)
+- Padronizando area cliente compras. [@cabralwms](https://github.com/cabralwms)
+- Atualização de instruções. [@exosinfor](https://github.com/exosinfor)
+- Padronização do emitente. [@barretowiisk](https://github.com/barretowiisk)
+- Agrupamento botão imprimir. [@barretowiisk](https://github.com/barretowiisk)
+- Melhorias visualizar OS/PIX. [@barretowiisk](https://github.com/barretowiisk)
+- Nova página imprimirOs. [@juliolobo](https://github.com/juliolobo)
+- Adicionado condicional para QRCode. [@juliolobo](https://github.com/juliolobo)
+- Atualização painel com informações (BÔNUS). [@juliolobo](https://github.com/juliolobo)
+
+### Fixed
+- Correção no painel cliente. [@cabralwms](https://github.com/cabralwms)
+- Refatoraçaõ de código. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Só trata data de pagamento se a mesma for informada. [@juliolobo](https://github.com/juliolobo)
+- Erro ao buscar pelo cliente na lista de OS. [@juliolobo](https://github.com/juliolobo)
+- Removendo busca por documento em autoCompleteUsuario na Os_model. [@juliolobo](https://github.com/juliolobo)
+- Correção sobreposição do menu autocomplete OS. [@cabralwms](https://github.com/cabralwms)
+- Ajustado seed de configurações. [@gdk-dev](https://github.com/gdk-dev)
+- Mantendo os valores pesquisados na pagination de OS. [@juliolobo](https://github.com/juliolobo)
+- Adicionado busca e ajuste na paginação. [@juliolobo](https://github.com/juliolobo)
+- Removido email do técnico da mensagem. [@juliolobo](https://github.com/juliolobo)
+- Correção lançamento de valor com centavos. [@cabralwms](https://github.com/cabralwms)
+- Correção migration vendas. [@cabralwms](https://github.com/cabralwms)
+- Ajustes de segurança de requisições da API. [@juliolobo](https://github.com/juliolobo)
+- Usando $_SERVER["HTTP_AUTHORIZATION"] para o App autenticar no mapos na rede local. [@juliolobo](https://github.com/juliolobo)
+- Persistindo busca na paginação da listagem de vendas. [@juliolobo](https://github.com/juliolobo)
+- Passando possibilidade de reGenToken na validação do token. [@juliolobo](https://github.com/juliolobo)
+- Correção em REST controller. [@Wilmerson](https://github.com/willph)
+- Adicionando uma coluna para exibir se é fornecedor ou cliente. [@janeiaraujo](https://github.com/janeiaraujo)
+- Correção faturar vendas. [@cabralwms](https://github.com/cabralwms)
+- Correção condição vendas finalizada e faturada. [@cabralwms](https://github.com/cabralwms)
+- Melhorias e correções em visualizar os, imprimir os e views OS. [@cabralwms](https://github.com/cabralwms).
+- Correção menor de escrição. [@exosinfor](https://github.com/exosinfor)
+- Atualização auto instalador. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em link de pagamento ASAAS. [@Wilmerson](https://github.com/willph)
+- Correção em calculo de margem dos produtos. [@lukasabino](https://github.com/lukasabino)
+- Correções setores de vendas admin, impressão e espaços. [@cabralwms](https://github.com/cabralwms)
+- Correção do calendário status aprovado. [@cabralwms](https://github.com/cabralwms)
+- Corrigindo buscas por cpf, autocomplete com cpf. [@cabralwms](https://github.com/cabralwms)
+- Padronizar dados clientes em vendas. [@cabralwms](https://github.com/cabralwms)
+- Ajuste na paginação de OS na API. [@juliolobo](https://github.com/juliolobo)
+- Ajuste IMPRIMIR_ANEXOS. [@juliolobo](https://github.com/juliolobo)
+- Ajuste para não exibir QRCode na via empresa caso não tenha cheve Pix. [@juliolobo](https://github.com/juliolobo)
+- Verifica se existe a variável no .env antes de tentar modificar. [@juliolobo](https://github.com/juliolobo)
+- Ajuste em imprimirOs. [@Wilmerson](https://github.com/willph)
+- Ajuste em imprimir.css. [@Wilmerson](https://github.com/willph)
+- Fix corrige, na tela do financeiro total de descontos aplicados. [@viniciusvams](https://github.com/viniciusvams)
+
+### Security Fix
+- XSS Clean em requisições da API
+
+## [4.45.0] - 2024-04-10
+### Fixed
+- Implementado uso correto de CSRF. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Ajustes do Github_updater.php e captcha. [@juliolobo](https://github.com/juliolobo)
+- Estava faltando a abertura de uma chave no if. [@juliolobo](https://github.com/juliolobo)
+- Adicionando xss_clean aos textarea. [@juliolobo](https://github.com/juliolobo)
+- Adicionando Controllers faltantes ao CSFR. [@juliolobo](https://github.com/juliolobo)
+- Informando ao Log de qual OS o serviço foi excluido. [@juliolobo](https://github.com/juliolobo)
+- Atualização do gerencianet para Efipay. [@cabralwms](https://github.com/cabralwms)
+- Ajustes ao adicionar "riscado" em algum texto pelo editor trumbowyg. [@juliolobo](https://github.com/juliolobo)
+
+### Added
+- Uso de variáveis de ambiente (.env) para configuração do sistema. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.44.0] - 2024-02-13
+### Security Fix
+- Correção Area do cliente. [@Fesantt](https://github.com/Fesantt)
+- Correção Login Mine e Administração. [@Fesantt](https://github.com/Fesantt)
+- Adicionando verificação captcha no formulário de cadastro de cliente. [@juliolobo](https://github.com/juliolobo)
+
+## [4.43.0] - 2024-02-10
+### Security Fix
+- Proteção contra CSFR na área do cliente. [@Fesantt](https://github.com/Fesantt)
+
+## [4.42.0] - 2023-10-25
+### Fixed
+- Erro na aba OS. [@barretowiisk](https://github.com/barretowiisk)
+- Correção nos lançamentos financeiros. [@barretowiisk](https://github.com/barretowiisk)
+- Correção no formato de datas no financeiro. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em Clientes. [@lukasabino](https://github.com/lukasabino)
+- Sobreposição mini calendário ao adicionar/editar venda. [@barretowiisk](https://github.com/barretowiisk)
+- Correção no instalador do Windows. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em fechamento de if. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Correção do ícone de limpar na área de relatório. [@WilliamCamargo](https://github.com/WillianCamargo01)
+- Correção do mini calendário que ao clicar na data para faturar uma Os ou Venda ele fica atrás do modal. [@WilliamCamargo](https://github.com/WillianCamargo01)
+- Correção da instalação via docker. [@thdev-matheus](https://github.com/thdev-matheus)
+- Correção em orçamento de venda. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em lançamento parcelado. [@lukasabino](https://github.com/lukasabino)
+- Correção em cabeçalho ao faturar OS. [@barretowiisk](https://github.com/barretowiisk)
+- Correção em modal de desconto de OS do calendário no dashboard. [@barretowiisk](https://github.com/barretowiisk)
+- Correção de desconto em calendário. [@Wilmerson](https://github.com/willph)
+- Correção em modal de editar lançamento financeiro. [@Wilmerson](https://github.com/willph)
+
+### Added
+- Auto Instalador Map-OS Ubuntu/Debian. [@barretowiisk](https://github.com/barretowiisk)
+
+## [4.41.0] - 2023-09-16
+### Fixed
+- Sobreposição mini calendário ao adicionar/editar venda. [@barretowiisk](https://github.com/barretowiisk)
+- Erro no upload na OS (aba Anexos). [@barretowiisk](https://github.com/barretowiisk)
+- Correção para aparecer o ID da OS que o usuario adicionou em logs. [@Fesantt](https://github.com/Fesantt)
+- Remoção de linhas na impressão de Vendas. [@lukasabino](https://github.com/lukasabino)
+- Variável em visualizar OS na área do cliente. [@Wilmerson](https://github.com/willph)
+- Variável emitente e cliente quando vazia ao resetar senha. [@Wilmerson](https://github.com/willph)
+- Acessar propriedade inválida em usuário. [@Wilmerson](https://github.com/willph)
+
+### Added
+- Impressão de orçamento de venda. [@barretowiisk](https://github.com/barretowiisk)
+- Aba de vendas em clientes. [@lukasabino](https://github.com/lukasabino)
+- Vincula cliente/fornecedor a lançamento parcelado. [@lukasabino](https://github.com/lukasabino)
+
+## [4.40.0] - 2023-05-14
+### Fixed
+
+- Corrigido CP não fiscal. [@Wilmerson](https://github.com/willph)
+- Corrigido dashboard de estatística. [@Wilmerson](https://github.com/willph)
+- Corrigido impressão no windows. [@Wilmerson](https://github.com/willph)
+- Corrigido layout. [@MilsonElias](https://github.com/MilsonElias)
+- Corrigido bugs de editor de texto em OS e Vendas. [@MilsonElias](https://github.com/MilsonElias)
+- Corrigido valor total em layout. [@MilsonElias](https://github.com/MilsonElias)
+- Corrigido botão voltar em editor de texto. [@MilsonElias](https://github.com/MilsonElias)
+- Corrigido nome de usuário em log de auditoria. [@HenriqueMiranda](https://github.com/Henrique-Miranda)
+- Corrigido relatórios financeiros. [@Wilmerson](https://github.com/willph)
+- Corrigido problema de fullscreen e whatsapp. [@WilliamCamargo](https://github.com/WillianCamargo01)
+
+### Added
+
+- Implementado desconto por porcentagem e valor. [@Wilmerson](https://github.com/willph)
+- Implementado opção de imprimir duas vias. [@Wilmerson](https://github.com/willph)
+- Suporte ao PHP 8 pra cima. [@Wilmerson](https://github.com/willph)
+
+## [4.39.0] - 2022-10-28
+### Fixed
+
+- Correções em editarVenda.php corrigido erro para permitir adicionar desconto em venda com valor superior a mil reais, erro de mascará, consequentemente foi atualizado imprimirVenda.php e imprimirVendaTermica.php para tratar o mesmo problema. [@Rodrigo-Paz](https://github.com/Rodrigo-Paz)
+- Correções no relatorioFinanceiro.php valor total que não estava informado assim como o valor total do relatorio visto que nao puxava vendas sem desconto, foi corrigido e adicionado simbolo de % no lugar de R$ para o campo desconto. [@Rodrigo-Paz](https://github.com/Rodrigo-Paz)
+
+### Changed
+
+- Trocado link parta envio via Whatsapp, afim de abranger usuários do Whastapp desktop e Whatsapp mobile, já que o atual web.whatsapp.com não faz o redirecionamento para os apps citados anteriormente. Essa alteração não afeta usuários do Whatsapp Web. [@lukasabino](https://github.com/lukasabino)
+
+## [4.38.0] - 2022-04-29
+
+### Fixed
+
+- Correções gerais de bugs. [@Wilmerson](https://github.com/willph)
+
+### Added
+
+- Desconto em OS e Vendas. [@Wilmerson](https://github.com/willph)
+- Financeiro (parcelamento, desconto e melhorias). [@luizrn](https://github.com/luizrn)
+- Documentação de cronjobs no Windows. [@luizrn](https://github.com/luizrn)
+
+## [4.37.0] - 2022-03-27
+
+### Fixed
+
+- Correções gerais de bugs. [@Wilmerson](https://github.com/willph)
+- Correções gerais de bugs de layout. [@MilsonElias](https://github.com/MilsonElias)
+
+### Added
+
+- Implementado login com senha e recuperação de senha em área do cliente. [@Wilmerson](https://github.com/willph)
+
+## [4.36.2] - 2022-03-02
+
+### Fixed
+
+- Corrigido ícones em ações de detalhes/visualizar/atualizar cobranças. [@Wilmerson](https://github.com/willph)
+
+## [4.36.1] - 2022-02-23
+
+### Fixed
+- Corrigido deleção de anotações e serviços da OS. [@Wilmerson](https://github.com/willph)
+
+## [4.36.0] - 2022-02-20
+
+### Added
+- Adicionado novo layout referente a área do usuário e do cliente. Sendo o mesmo também responsivo. [@MilsonElias](https://github.com/MilsonElias)
+
+- Adicionado novo tema claro e tema escuro referente a área do usuário. [@MilsonElias](https://github.com/MilsonElias)
+
+- Adicionado nova logomarca. [@MilsonElias](https://github.com/MilsonElias)
+
+- Adicionado função em os.php para facilitar a visualização da OS em garantia, sem garantia e garantia vencida. [Luccas Woiciechoski] e [@Wilmerson](https://github.com/willph)
+
+- Adicionado função em painel.php mostrando receita dia e despesa dia. [@MilsonElias](https://github.com/MilsonElias) e [@Wilmerson](https://github.com/willph)
+
+- Adicionado função de adicionar e alterar imagem do usuário (foto do perfil). [@MilsonElias](https://github.com/MilsonElias) e [@Wilmerson](https://github.com/willph)
+
+## [4.35.2] - 2021-10-10
+
+### Fixed
+- Adequação para exibir mensagem de erro ao tentar faturar venda sem produtos e OS sem produtos e/ou serviços. [@visaotec](https://github.com/visaotec)
+
+## [4.35.1] - 2021-10-02
+
+### Fixed
+- Correção de bug que faturava OS/Venda incorretamente com valores superiores a R$ 1000,00. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido configuração de controle de edição de OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.35.0] - 2021-09-04
+
+### Added
+- Integração com gateway de pagamento asaas. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Link para acessar cadastro do cliente de dentro da OS. [@tutibueno](https://github.com/tutibueno)
+
+## [4.34.0] - 2021-07-11
+
+### Added
+- Envio de email para o cliente e técnicos após cadastro da OS pelo cliente. [@tutibueno](https://github.com/tutibueno)
+- Envia de email de boas vindas quando o cliente se cadastra na área do cliente. [@tutibueno](https://github.com/tutibueno)
+- Notifica o time técnico que um novo cliente se cadastrou pela área do cliente. [@tutibueno](https://github.com/tutibueno)
+
+### Fixed
+- Corrigido versão do PHP em dockerfile. [@mikxingu](https://github.com/mikxingu)
+
+## [4.33.1] - 2021-05-24
+
+### Fixed
+- Corrigido valor incorreto em banco.sql. [@willph](https://github.com/willph)
+
+## [4.33.0] - 2021-05-23
+
+### Added
+- Adicionado status "Aprovado" em OS. [@fwsund](https://github.com/fwsund)
+- Sugestão de valor de desconto ao faturar OS/Vendar de acordo com percentual. [@hoshikawakun](https://github.com/hoshikawakun)
+- Sugestão de valor do produto ao editar/adicionar produto de acordo com margem. [@hoshikawakun](https://github.com/hoshikawakun)
+
+### Changed
+- Melhorias gerais em relatórios. [@hoshikawakun](https://github.com/hoshikawakun)
+- Melhora em cores de gráficos do painel. [@mikxingu](https://github.com/mikxingu)
+
+## [4.32.2] - 2021-04-16
+
+### Changed
+- Alteradas as cores dos gráficos do painel para melhor entendimento e leitura dos gráficos e adicionado comentário nas linhas para que os usuários possam alterar as cores mais facilmente. [@mikxingu](https://github.com/mikxingu)
+
+## [4.32.1] - 2021-03-27
+
+### Fixed
+- Adequação para usar versão de PHP 7.4 fixa em docker e correção no comando de instalação do composer em docker. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adequação para usar submit handler para evitar que lançamentos financeiros sejam duplicados. [@bietez](https://github.com/bietez)
+
+## [4.32.0] - 2021-03-23
+
+### Added
+- Criada uma forma configurável de como o padrão básico de exibição da listagem de OS.[@bulfaitelo](https://github.com/bulfaitelo)
+
+### Fixed
+- Corrigido problema ao gerar qr code de PIX. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido erro ao selecionar filtro faturado e nome do cliente, não vinha os dados existentes. [@willph](https://github.com/willph)
+- Corrigido autocomplete de CEP do viacep. [@douglascoe](https://github.com/douglascoe)
+
+## [4.31.1] - 2021-02-13
+
+### Fixed
+- Atualizado dependências. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.31.0] - 2021-02-11
+
+### Added
+- Implementado QR Code de PIX para pagamento de os e venda em imprimirOs e imprimirVenda. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Melhorado imprimir os e venda. [@Flexotron20](https://github.com/Flexotron20)
+
+### Fixed
+- Colocado "*" para mostrar que campos ao criar lançamento financeiro são obrigatórios. [@cleytonasa](https://github.com/cleytonasa)
+- Adicionado método de pagamento "PIX" nos lugares faltantes. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.30.3] - 2021-02-07
+
+### Fixed
+- Corrigido bug onde ao ter valor de centavos o valor do boleto vinha errado. Ex: 5,50 vinha no boleto 55,00 reais. [@willph](https://github.com/willph)
+- Corrido o valor que era salvo para o banco de dados que ocasionava o erro nas views cobranças e vizualizar cobrança. [@willph](https://github.com/willph)
+
+## [4.30.2] - 2021-02-03
+
+### Changed
+- Alterado texto de grafico de Vendas para Financeiro, para adequar melhor a realidade do grafico. [@willph](https://github.com/willph)
+- Update: Highcharts V. 9.0.0. [@willph](https://github.com/willph)
+- Atualizado versão mínima do PHP em instalador. [@willph](https://github.com/willph)
+
+### Fixed
+- Corrigido erro onde ao clicar na lupa para pesquisar o cnpj o mesmo não preenchia o numero de forma automatica, pois faltava no input id="numero". [@willph](https://github.com/willph)
+- Correção de javascript onde quebrava o codigo impedindo carregamento dos graficos do financeiro>lançamento e do calendario. [@willph](https://github.com/willph)
+- Corrigido case "Negociação" onde faltava a cor e o break no codigo em os.php e Mapos.php. [@willph](https://github.com/willph)
+- Colocado cor e o break no case de "Negociação" na view os.php. [@willph](https://github.com/willph)
+- Adicionado o arquivo update_4.29.0_to_4.30.2.sql que estava faltando. [@seitbnao](https://github.com/seitbnao)
+- Correção do botão pesquisar cnpj onde não trazia todos os dados de endereço. [@willph](https://github.com/willph)
+- Corrigido cadastro (MIME). [@willph](https://github.com/willph)
+
+## [4.30.1] - 2021-01-31
+
+### Fixed
+- Adequação para não salvar nome do cliente como maiúsculo ao editar. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.30.0] - 2021-01-31
+
+### Added
+- Adicionado opção de pagamento PIX em receitas e despesas. [@cleytonasa](https://github.com/cleytonasa)
+- Adicionado o controle de edição de OS com status CANCELADO e/ou FATURADO. [@seitbnao](https://github.com/seitbnao)
+- Adicionado opção de cliente fornecedor em clientes. [@seitbnao](https://github.com/seitbnao)
+- Adiciona o controle de visualização de dataTables. [@seitbnao](https://github.com/seitbnao)
+
+### Changed
+- Adequação para renderizar PDF gerado de relatório MEI no navegador. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Alterado a tela de configurações do sistema para um formato com abas. [@seitbnao](https://github.com/seitbnao)
+- Alterado a tela de inclusão de clientes. [@seitbnao](https://github.com/seitbnao)
+- Alterado o nome cliente do Menu para Cliente / Fornecedor. [@seitbnao](https://github.com/seitbnao)
+- Separado as permissões por colapse. [@seitbnao](https://github.com/seitbnao)
+- Remove a obrigatoriedade dos campos em adicionar e editar um cliente, somente o nome é obrigatório no cadastro. [@seitbnao](https://github.com/seitbnao)
+
+## [4.29.0] - 2021-01-24
+
+### Added
+- Adiciona novas opções de unidades de medidas em produtos, seguindo modelo da SEFAZ-PA. [@seitbnao](https://github.com/seitbnao)
+- Adiciona BLOQUEIO em exclusão e edição de OS que esteja com status CANCELADO e/ou FATURADO. [@seitbnao](https://github.com/seitbnao)
+
+### Fixed
+- Corrigido quebra de código por Exception geradas nas APIs. [@willph](https://github.com/willph)
+- Atualizado lib MPDF. [@willph](https://github.com/willph)
+- Corrige uma possível falha na atualização do sistema usando API do GitHub. [@seitbnao](https://github.com/seitbnao)
+- Corrige o valor da OS na notificação do whatsapp. [@seitbnao](https://github.com/seitbnao)
+- Corrige a notificação do whatsapp para que a mesma não venha com tags HTML. [@seitbnao](https://github.com/seitbnao)
+- Algumas melhorias no controle de estoque, agora quando a OS é excluída os produtos voltam para o estoque. [@seitbnao](https://github.com/seitbnao)
+- Corrige o menu Financeiro em tablets e celulares. [@seitbnao](https://github.com/seitbnao)
+
+## Changed
+- Liberado edição do CPF na area administrativa, porem foi mantido o bloqueio no editar usuário. [@willph](https://github.com/willph)
+
+## [4.28.0] - 2021-01-20
+
+### Added
+- Habilitar ou desabilitar a edição de data de pagamento retroativa ou futura na edição de lançamentos. [@seitbnao](https://github.com/seitbnao)
+
+### Fixed
+- Atualizado lib de QR code. [@seitbnao](https://github.com/seitbnao)
+- Corrigido alerts gerais. [@seitbnao](https://github.com/seitbnao)
+- Refatorado módulo de pagamentos. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.27.0] - 2021-01-13
+
+### Added
+- Implementado notificação whatsapp personalizada e sweetalert. [@seitbnao](https://github.com/seitbnao)
+
+## [4.26.2] - 2021-01-09
+
+### Fixed
+- Corrigindo erro nos lancamentos, onde após update não eram listados os lancamentos sem usuarios_id. [@bulfaitelo](https://github.com/bulfaitelo)
+
+## [4.26.1] - 2021-01-09
+
+## Fixed
+- Corrige um erro que bloqueava o preenchimento do cliente em adicionar vendas. [@seitbnao](https://github.com/seitbnao)
+
+## [4.26.0] - 2021-01-05
+
+## Added
+- Adiciona a cobrança ao lado do cliente. [@seitbnao](https://github.com/seitbnao)
+- Permite reenviar a cobrança por email. [@seitbnao](https://github.com/seitbnao)
+- Permite visualizar o boleto de cobrança. [@seitbnao](https://github.com/seitbnao)
+- Permite atualizar o status de cobrança. [@seitbnao](https://github.com/seitbnao)
+- Bloqueia o cliente de gerar uma cobrança, sendo restrito apenas para o administrador. [@seitbnao](https://github.com/seitbnao)
+- Faz uma alteração na tabela cobrancas, para que a mesma receba o id do cliente. [@seitbnao](https://github.com/seitbnao)
+
+## [4.25.1] - 2021-01-04
+
+## Fixed
+- Corrigido as permissões para que não ocorra erros após a instalação. [@seitbnao](https://github.com/seitbnao)
+- Corrigido o erro ao emitir o alerta de erro caso uma cobrança já esteja viculada a alguma venda/os. [@seitbnao](https://github.com/seitbnao)
+
+## [4.25.0] - 2020-12-30
+
+## Added
+- Adicionado módulo para gerenciar as cobranças emitidas por boleto/link. [@seitbnao](https://github.com/seitbnao)
+
+## Fixed
+- Corrigido problema na geração da cobrança a partir da ordem de serviço. [@seitbnao](https://github.com/seitbnao)
+
+## [4.24.0] - 2020-12-27
+
+## Added
+- Máscara em CNPJ no menu adicionar e editar emitente. [@willph](https://github.com/willph)
+- Adicionado campo CEP em Emitente para facilitar preenchimento e organizado controller, model e bd para aceitar novo campo. [@willph](https://github.com/willph)
+- Adaptado função javascript para buscar dados do CNPJ em Cliente e Emitente. [@willph](https://github.com/willph)
+- Adicionado botão para pesquisar e preencher os dados da empresa automaticamente em cadastro/editar do emitente. [@willph](https://github.com/willph)
+
+## Fixed
+- Correção de bug na area do cliente nos campos telefone e email em visualizarOs e visualizarVenda. [@willph](https://github.com/willph)
+
+## [4.23.0] - 2020-12-17
+
+## Added
+- Adicionado a opção de gerar o PDF do Boleto. [@willph](https://github.com/willph)
+- Adicionado cor na Agenda OS. [@willph](https://github.com/willph)
+- Adicionado a opção de link de pagamento em OS e Vendas, com a possibilidade de enviar por Whatsapp. [@willph](https://github.com/willph)
+
+## Fixed
+- Removido do form os client id e secret em OS e vendas. [@willph](https://github.com/willph)
+- Corrigido bug que quebrava a exibição da pagina por causa de um erro de exception ao clicar gerar etiqueta. [@willph](https://github.com/willph)
+- Corrigido observações e observações para cliente em vendas e melhorado visualização. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido exibição de modal de conformação de exclusão de credenciais de pagamento. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.22.0] - 2020-12-13
+
+## Added
+- Adicionado a opção de link de pagamento em OS e Vendas, com a possibilidade de enviar por Whatsapp. [@willph](https://github.com/willph)
+
+## [4.21.0] - 2020-12-10
+
+## Added
+- Implementado pagamento via gerencianet. [@willph](https://github.com/willph)
+
+## [4.20.2] - 2020-12-06
+
+## Fixed
+- Adequação para permitir editar observações de lançamentos financeiros. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.20.1] - 2020-11-10
+
+## Fixed
+- Correção de filtro de cliente/fornecedor que não funcionava com caracteres especiais. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.20.0] - 2020-11-08
+
+## Added
+- Adicionado observações em lançamentos financeiros. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado autocomplete de cliente/fornecedor em listagem de lançamentos financeiros. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## Fixed
+- Adequação para excluir os lançamentos financeiros ao excluir uma OS/Venda faturada. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adequação para permitir adicionar produtos/serviços na OS com preço zerado. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.19.0] - 2020-10-26
+
+## Added
+- Implementado possibilidade de visualizar/editar/excluir OS pelo calendário de OS. [@willph](https://github.com/willph)
+
+## Fixed
+- Removido SDK de PayPal abandonada. [@willph](https://github.com/willph)
+- Atualizado SDK de mercado pago. [@willph](https://github.com/willph)
+
+## [4.18.1] - 2020-10-18
+
+## Fixed
+- Corrigido exibição de observações para cliente em vendas. [@Flexotron20](https://github.com/Flexotron20)
+
+## [4.18.0] - 2020-10-17
+
+## Fixed
+- Corrigido bug de visualização de sidebar em mobile. [@visaotec](https://github.com/visaotec)
+- Corrigido exibição de ícones em mobile. [@visaotec](https://github.com/visaotec)
+
+## Added
+- Implementado relatório de vendas (rápido e custom) em XLS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado campo de observações para cliente em vendas. [@Flexotron20](https://github.com/Flexotron20)
+
+## [4.17.1] - 2020-10-05
+
+## Fixed
+- Corrigido filtro de status de lançamento. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.17.0] - 2020-10-04
+
+## Added
+
+- Modificado filtros de lançamentos para permitir período arbitrário de data e adicionado filtro de status. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.16.0] - 2020-10-04
+
+## Added
+- Adicionado filtro por nome de cliente/fornecedor e filtro de tipo de lançamento em lançamentos financeiros. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado totais (produtos, serviços e geral) no final do relatório de os (rápido e custom). [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Implementado relatório de OS (rápido e custom) em XLS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.15.1] - 2020-09-26
+
+## Fixed
+- Corrigido colar texto em campo CPF/CNPJ (documento) em clientes. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## Changed
+- Adicionado regra de validação unique em campo CPF/CNPJ (documento) em clientes. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.15.0] - 2020-09-21
+
+## Added
+- Adicionado observacões em vendas. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.14.1] - 2020-09-21
+
+## Fixed
+- Corrigido busca de calendário de OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.14.0] - 2020-09-20
+
+## Fixed
+- Implementado calendário com as OS em dashboard. [@willph](https://github.com/willph)
+
+## [4.13.2] - 2020-09-20
+
+## Fixed
+- Corrigido problema em adicionar produtos/serviços e OS em que o último id de produto/serviço era mantido no campo hidden e assim era desconsiderado o produto/serviço sendo escolhido na segunda adição. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.13.1] - 2020-09-15
+
+## Fixed
+- Adequação para manter o estado da checkbox "pagoEditar" em lançamentos. [@nmdavi](https://github.com/nmdavi)
+
+## [4.13.0] - 2020-08-29
+
+## Added
+- Implementado relatório SKU. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## Changed
+- Adequação para retornar relatórios financeiros ordenados por data de vencimento do lançamento. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## Fixed
+- Corrigido título de modal e descrição de faturamento de OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido bug de relatório financeiro rápido omitindo alguns lançamentos. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.12.1] - 2020-08-16
+
+## Fixed
+- Corrigido quantidade e valor de serviços/produtos em área de clientes. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.12.0] - 2020-08-15
+
+## Added
+- Implementado relatório financeiro em XLSX. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.11.2] - 2020-07-25
+
+## Changed
+- Mudança (Linhas 70,71,72) realizada para incluir nas pesquisas também o código de barras, assim poderia ser feito através de leitor e alterado o limite devido termos muitos itens com descrição similar se a pesquisa for executada pelo nome. [@FlexoSol](https://github.com/FlexoSol)
+- Mudança (Linha 7 para facilitar a localização e posterior envio via e-mail, onde alguns clientes(empresas) exigem que a proposta esteja em anexo e não em corpo do e-mail. [@FlexoSol](https://github.com/FlexoSol)
+- Mudança (Linha 94,106) para incluir o código do Produto na venda e facilitar a identificação. [@FlexoSol](https://github.com/FlexoSol)
+- Mudança (Linha 7 para facilitar a localização e posterior envio via e-mail, onde alguns clientes(empresas) exigem que a proposta esteja em anexo. [@FlexoSol](https://github.com/FlexoSol)
+
+## [4.11.1] - 2020-07-18
+
+## Added
+- Corrigido relatório rápido de produtos com estoque mínimo. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.11.0] - 2020-07-16
+
+## Added
+- Adicionando relatório de clientes em xls. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [4.10.0] - 2020-07-01
+
+## Added
+- Adicionando suporte a HMVC. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## Fixed
+- Corrigindo erro na listagem quando arquivo não encontrado. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [4.9.0] - 2020-06-14
+
+## Added
+- Adequação para permitir a busca de cliente via telefone e celular. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.8.3] - 2020-06-14
+
+## Fixed
+- Corrigido download de anexo de OS em área de cliente e adequação para exibir nome do arquivo abaixo. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.8.2] - 2020-05-29
+
+## Fixed
+- Adequação para mostrar nome abaixo do ícone do anexo em OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido tema neve em mobile. [@willph](https://github.com/willph)
+- Corrigido permissões padrão em instalação. [@willph](https://github.com/willph)
+
+## [4.8.1] - 2020-05-23
+
+## Changed
+- Melhoria em mensagem de erro pasta faltante system. [@RamonSilva20](https://github.com/RamonSilva20)
+- Melhoria em consultas de relatório (order_by e data inicial e data final). [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.8.0] - 2020-05-18
+
+## Fixed
+- Correção de alguns erros de escrita em form_validation. [@willph](https://github.com/willph)
+
+## Changed
+- Liberado todos os modos de pagamento em mercado pago. [@willph](https://github.com/willph)
+- Melhoria em impressão de OS em impressora térmica. [@willph](https://github.com/willph)
+
+## [4.7.5] - 2020-05-11
+
+## Fixed
+- Refatorado a adição de produtos/serviços na OS com a adição de form_validation. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.7.4] - 2020-05-09
+
+## Changed
+- Melhorado a limpeza de diretório extrapido de atualização para funcionar em qualquer SO. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.7.3] - 2020-05-08
+
+## Fixed
+- Corrigido versão inicial de migrations. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.7.2] - 2020-05-02
+
+## Fixed
+- Corrigido valor total de OS incorreto por conta de JOINS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.7.1] - 2020-05-01
+
+## Changed
+- Melhoria em execução de migration e refatoração em helper de validação. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Melhoria em busca de informações na receita federal (CNPJ). [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.7.0] - 2020-04-28
+
+### Added
+- Adicionado coluna contato e coluna complemento na tabela de clientes. [@gustavol](https://github.com/gustavol)
+- Implementado auto complete de dados de cliente via API da Receita Federal (CNPJ). [@gustavol](https://github.com/gustavol)
+
+## [4.6.2] - 2020-04-29
+
+### Fixed
+- Corrigido total de receitas, despesas e saldo em lançamentos financeiros. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.6.1] - 2020-04-28
+
+### Changed
+- Melhorado extração de zip de atualização. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.6.0] - 2020-04-27
+
+### Fixed
+- Corrigido topo de todos os relatórios. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Added
+- Implementado gráfico de barras dinâmico de vendas por ano.[@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.5.4] - 2020-04-23
+
+### Fixed
+- Corrigido logs de OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido separador de diretórios em upload de anexo em OS. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.5.3] - 2020-04-21
+
+### Fixed
+- Corrigido ordem de exibição de últimas OS em painel de cliente. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido exibição e download de anexos de OS em painel de cliente. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.5.2] - 2020-04-21
+
+### Fixed
+- Corrigido soma de valor total de OS em listagem. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.5.1] - 2020-04-21
+
+### Changed
+- Adicionando Descrição na busca geral, juntamente da coluna no resultado. [@bulfaitelo](https://github.com/bulfaitelo)
+
+## [4.5.0] - 2020-04-19
+
+### Added
+- Adequação para mostrar valor total de OS na tela de listagem (valor total e valor total (faturado)). [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Melhoria em busca de tag em releases no atualizador. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Melhoria em listagem de arquivos. [@hoshikawakun](https://github.com/hoshikawakun)
+
+### Fixed
+- Corrigido exibição de data de vencimento de garantia. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.4.1] - 2020-04-10
+
+### Fixed
+- Criado mascara para cpf de usuario em adicionar e editar. Evitar erro de entra CNPJ nesse campo. [@willph](https://github.com/willph)
+- Validação de cpf do usuario em adicionarUsuario.php. [@willph](https://github.com/willph)
+- Criado verificação de CPF e CNPJ em adicionarCliente.php e editarCliente.php. [@willph](https://github.com/willph)
+- Corrigido erro em view os.php devido preenchimendo de caracteres não numericos em view adicionarOs.php e EditarOs.php. [@willph](https://github.com/willph)
+- Criado Campo CEP na tabela USUÁRIOS. [@willph](https://github.com/willph)
+- Corrigido erro email do Usuário e Cliente em Vendas. [@willph](https://github.com/willph)
+- Otimizado configuração de nginx em docker. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.4.0] - 2020-04-10
+
+### Added
+- Implementado atualizador automático via GitHub. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.3] - 2020-04-05
+
+### Added
+- Implementado docker e docker-compose. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Removido verificação de timezone em instalação. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.2.2] - 2020-03-28
+
+### Fixed
+- Otimizado e flexibilizado relatório financeiro. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Implementado função dump and die para faciltar desenvolvimento. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado dependência de desenvolvimento dumper de Symfony. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.2.1] - 2020-03-28
+
+### Fixed
+- Reformatação do código utilizando linter PSR-2. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.2.0] - 2020-03-28
+
+### Added
+- Implementado gestor de erros Whoops, que exibe páginas de erros formatadas. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Atualizado bibliotecas do composer. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.1.2] - 2020-03-26
+
+### Fixed
+
+- Corrigido problema em cálculo exibição de data de vencimento da garantia de OS finalizada. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Atualizado bibliotecas do composer. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [4.1.1] - 2020-03-22
+
+### Fixed
+- Corrigido email de cliente no lugar de vendedor. [@RamonSilva20](https://github.com/RamonSilva20)
+- Corrigido problema na tela de listagem de OS com garantia não numérica. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [4.1.0] - 2020-03-04
+
+### Fixed
+- Corrigido layout e links de anexos de OS. [@RamonSilva20](https://github.com/RamonSilva20)
+- Corrigido problema no layout de etiquetas. [@RamonSilva20](https://github.com/RamonSilva20)
+- Corrigido layout e problema ao salvar pagamento. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## Changed
+- Anexos de OS estruturados dentro de pastas MM-AAAA/OS-#ID. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [4.0.0] - 2020-03-03
+
+### Added
+- Adicionado o recibo para impressora não fiscal em OS e Vendas. [@willph](https://github.com/willph)
+- Adicionado opção de pagamento com Mercado Pago. [@willph](https://github.com/willph)
+- Adicionado informação de vencimento de prazo de garantia. [@willph](https://github.com/willph)
+- Adicionado composer ao projeto. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado biblioteca de migrations do CodeIgniter. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Implementado seeders para inserção de dados no banco de dados.
+- Botão para atualizar banco de dados com as migrations em: Configurações -> Sistema. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado controller `Tools` para permitir a criação de migrations e seeders pelo terminal. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Fixed
+- Adicionado permissão de sistema e email ao usuário admin criado inicialmente. [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido valor de `dataCadastro` incorreta em admin criado inicialmente [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Corrigido erro no relatório de clientes com datas não preenchidas. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Banco de dados agora será gerenciado com migrations pela biblioteca do CodeIgniter, onde o último arquivo de atualização manual é o `update_3.15.0_to_4.0.0.sql`. Ainda será necessário atualizar sempre o arquivo `banco.sql` com as novas tabelas para que o script de instalação continue funcionando [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Ativado Logs para permitir melhor debug. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [3.15.0] - 2020-02-15
+
+### Added
+- Adicionado opções de configuração do sistema. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adicionado status faturado no filtro de relatório de OS. [@ZanzouShio](https://github.com/ZanzouShio)
+- Adicionado opção de atualização de estoque pelo listagem e dashboard. [@TiagoOliveira](https://github.com/trollfalgar)
+
+### Fixed
+- Corrigido arquivo de configurações. [@RamonSilva20](https://github.com/RamonSilva20)
+- Correção de bug na área do cliente ao efetuar login. [@GiovanneOliveira](https://github.com/giovanne-oliveira)
+- Correção de exibição de produtos com estoque mínimo. [@MikeAlves](https://github.com/mikxingu)
+
+### Changed
+- Atualização da versão do Codeigniter para 3.1.11. [@RamonSilva20](https://github.com/RamonSilva20)
+- Refatoramento de controllers para diminuir repetição de código. [@RamonSilva20](https://github.com/RamonSilva20)
+- Simplificado exibição de mensagem de acesso expirado. [@RamonSilva20](https://github.com/RamonSilva20)
+- Remoção de data e hora no menu superior. [@RamonSilva20](https://github.com/RamonSilva20)
+- Nome do app dinâmico na área do cliente. [@TiagoOliveira](https://github.com/trollfalgar)
+
+## [3.14.2] - 2019-12-18
+
+### Fixed
+- Corrigido data por extenso no topo do tema. [@ZanzouShio](https://github.com/ZanzouShio)
+- Corrigido icons que não apareciam. [@willph](https://github.com/willph)
+- Corrigido erro no botão de envio por WhatsApp. [@willph](https://github.com/willph)
+- Corrigido erro de comentário no arquivo config. [@willph](https://github.com/willph)
+
+### Changed
+- Refatoramento de listagens de cadastros. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.14.1] - 2019-12-02
+
+### Fixed
+- Corrigido erro ao exibir logo na visualização de OS. [@willph](https://github.com/willph)
+- Corrigido icon de pesquisar na tela de OS. [@willph](https://github.com/willph)
+- Corrigido problema ao imprimir etiquetas. [@willph](https://github.com/willph)
+- Corrigido problema de return-path ao utilizar SMTP. [@RamonSilva20](https://github.com/RamonSilva20)
+- Corrigido erro no link de WhatsApp ao não ter cadastro de emitente. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.14.0] - 2019-11-22
+
+### Changed
+- Adicionado impressão de etiquetas nos padrões: EAN13, UPCA, CODE 93, CODE 128, CODABAR, QR-CODE. [@willph](https://github.com/willph) e [@Marco](https://github.com/marcotuliomtb)
+- Adicionado campo de cadastro de código de barra. [@willph](https://github.com/willph)
+- Adicionado teclas de atalho. [@willph](https://github.com/willph)
+- Adicionado botão de logout no menu lateral. [@mvnp](https://github.com/mvnp)
+
+### Changed
+- Atualização da versão do mpdf para 6.1.4. [@willph](https://github.com/willph)
+- Visualização e impressão de saldo total das OS independente do status. [@bulfaitelo](https://github.com/bulfaitelo)
+
+
+## [3.12.0] - 2019-11-06
+
+### Changed
+- Organização do Menu. [@willph](https://github.com/willph)
+- Remoção de arquivo desnecessário. [@willph](https://github.com/willph)
+
+## [3.11.0] - 2019-10-22
+
+### Added
+- Adicionado alerta de cadastro com sucesso de cliente. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+## [3.10.0] - 2019-10-08
+
+### Added
+- Adicionado anotações na OS. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.9.0] - 2019-10-05
+
+### Added
+- Adicionado envio de email de OS automaticamente na criação e edição (email é enviado para o cliente da OS,  para o emitente e para o técnico da OS). [@Pr3d4dor](https://github.com/Pr3d4dor)
+- Adicionado novas opções (M² e Outros) no select de unidade na criação e edição de produto. [@Pr3d4dor](https://github.com/Pr3d4dor)
+
+### Changed
+- Alterado alert padrão para sweet alert. [@David Vilaça](https://github.com/davidpvilaca)
+
+### Fixed
+- Corrigido bug de máscara CPF/CNPJ. [will.phelipe@gmail.com](https://github.com/willph).
+- Corrigido arquivo de update de data de expiração com data futura. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.8.0] - 2019-07-25
+
+### Added
+- Adicionada pesquisa por múltiplos status em OS. [@RamonSilva20](https://github.com/RamonSilva20)
+- Ao adicionar OS e Vendas usuário logado preenchido por padrão como responsável. [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Fixed
+- Correção tabela e botões OS. [@bulfaitelo](https://github.com/bulfaitelo)
+- Corrigido a tabela para torna-la responsiva, e os botões que não funcionavam em dispositivos móveis. [@bulfaitelo](https://github.com/bulfaitelo)
+
+## [3.7.0] - 2019-07-08
+
+### Added
+- Adicionada funcionalidade de envio de OS por email. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.6.0] - 2019-06-29
+
+### Added
+- Adicionada verificação de permissão para exibição de estatísticas no painel. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adicionada possibilidade de alteração de preços de produtos e serviços em OS. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adicionada possibilidade de adicionar quantidade de serviços em OS. [@RamonSilva20](https://github.com/RamonSilva20)
+- Adicionada possibilidade de alterar preços de produtos em Vendas. [@RamonSilva20](https://github.com/RamonSilva20)
+
+### Changed
+- Modificados alguns elementos de estilização. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.5.3] - 2019-05-18
+
+### Fixed
+- Corrigido remoção de garantias ao editar OS. [@RamonSilva20](https://github.com/RamonSilva20) e [@willph](https://github.com/willph)
+- Corrigido erro no arquivo matrix.js e funcoes.js. [will.phelipe@gmail.com](https://github.com/willph).
+
+### Changed
+- Alterado exibição de mensagem para esconder depois de 2.5 segundos. [will.phelipe@gmail.com](https://github.com/willph)
+
+## [3.5.2] - 2019-05-14
+
+### Fixed
+- Corrigido pesquisa de termos de garantia. [@RamonSilva20](https://github.com/RamonSilva20).
+- Corrigido erro no cadastro de garantias ao buscar nome do usuário logado. [@RamonSilva20](https://github.com/RamonSilva20).
+
+### Changed
+- Removendo textos desnecessários [will.phelipe@gmail.com](https://github.com/willph)
+
+## [3.5.1] - 2019-05-13
+
+### Fixed
+- Removendo obrigatoriedade do campo de garantias na tabela de OS para evitar erro ao não preencher no cadastro. [@RamonSilva20](https://github.com/RamonSilva20).
+
+### Changed
+- Alterado insert de usuário com permissão para o módulo de auditoria no arquivo sql. [@RamonSilva20](https://github.com/RamonSilva20)
+
+## [3.5.0] - 2019-05-12
+
+### Added
+- Adicionado modulo de auditoria para monitoramento de atividades no sistema. [@RamonSilva20](https://github.com/RamonSilva20).
+
+## [3.4.0] - 2019-05-10
+Por: Wilmerson Felipe[will.phelipe@gmail.com](https://github.com/willph)
+
+### Fixed
+- Corrigido exibição do Telefone em VizualizarOS e ImprimirOS
+
+### Changed
+- Padronização das Páginas para que todas tenha a palavra "Ações" referente aos botões vizualizar, adicionar, editar, excluir.
+- Adicionado campo Termo garantia em adicionarOS, editarOS referenciando ao termo garantia cadastrado.
+- Alterado Telefone para Celular do Cliente.
+
+### Added
+- Termo de Garantia referente ao request feature #253
+
+
+## [3.3.2] - 2019-04-13
+### Fixed
+- Corrigido exibição da label de status faturado em painel de visualização de cliente [@Pr3d4dor](https://github.com/Pr3d4dor).
+
+## [3.3.1] - 2019-03-03
+Por: Fábio Barbosa[fabiobarbosa@gmx.com](https://github.com/aportetecnologia)
+
+### Changed
+- Modificado a cor de fundo para branco do box de texto do trumbowyg
+- Modificado a disposicao dos campos trumbowyg para evitar rolagem prolongada da tela desnecessáriamente.
+- Reestilizado a tela de login para uma tela transparente e fundo dinamico
+- Obrigatoriedade de data final na OS
+    - Adicionar OS
+    - Editar OS
+
+### Fixed
+- Corrigido o calendario que ficava pro detras do modal no pagamento da os no fechamento da mesma.
+## [3.3] - 2019-02-28
+### Added
+
+- Adicionado máscaras 'CPF, CNPJ, TELEFONE, CEP, CELULAR, RG. [Thomas Henrique Lage Macedo](https://github.com/aportetecnologia) [lage.thomas@gmail.com]
+- Adicionado data de expiração de acesso. [Thomas Henrique Lage Macedo](https://github.com/aportetecnologia) [lage.thomas@gmail.com]
+Adicionado o campo valorTotal dentro do $this->data['results']. [Fábio Barbosa](https://github.com/aportetecnologia) - [fabiobarbosa@gmx.com]
+- Adicionado a Funcao para incluir na os a opcao "Aguardando Pecas". [Fábio Barbosa](https://github.com/aportetecnologia) - [fabiobarbosa@gmx.com]
+- Adicionado o campo Valor Total para aparecer o valor total da os quando estiver fechado. [Fábio Barbosa](https://github.com/aportetecnologia) - [fabiobarbosa@gmx.com]
+- Adicionado a div Ordens de Servicos Aguardando Pecas baseado no status da os. [Fábio Barbosa](https://github.com/aportetecnologia) - [fabiobarbosa@gmx.com]
+
+### Changed
+- Alterado layout da tela de login de clientes. [Thomas Henrique Lage Macedo](https://github.com/aportetecnologia) [lage.thomas@gmail.com]
+- Formatado o campo Valor total com 2 casas decimais e R$ (cifrao) - [Fábio Barbosa](https://github.com/aportetecnologia) - [fabiobarbosa@gmx.com]
+
+## [3.2] - 2019-02-18
+### Added
+- Implementado editor WYSIWYG [Trumbowyg](https://github.com/Alex-D/Trumbowyg) nos campos (Ordem de Serviço). [@Pr3d4dor](https://github.com/Pr3d4dor).
+    - Descrição Produto/Serviço
+    - Defeito
+    - Observações
+    - Laudo Técnico
+
+## [3.1.16] - 2019-01-14
+### Added
+- Adicionado e-mail do cliente na impressão da OS. [@RamonSilva20](https://github.com/RamonSilva20).
+
+### Fixed
+- Corrigido alteração de senha na tela minha conta [@RamonSilva20](https://github.com/RamonSilva20).
+- Corrigido link no formulário de adicionar arquivo. [@RamonSilva20](https://github.com/RamonSilva20).
+
+## [3.1.15] - 2018-11-24
+### Fixed
+- Corrigido campo descrição na impressão e visualização de OS [@RamonSilva20](https://github.com/RamonSilva20).
+
+## [3.1.14] - 2018-11-13
+### Added
+- Modelo de impressão de OS otimizando espaços [@RamonSilva20](https://github.com/RamonSilva20).
+- Refatoração de views [@mariolucasdev](https://github.com/mariolucasdev).
+
+## [3.1.13] - 2018-10-04
+### Added
+- Assistente de instalação [@rodrigo3d](https://github.com/rodrigo3d).
+- Arquivo de changelog [@RamonSilva20](https://github.com/RamonSilva20).
+
+
+## [3.1.12] - 2018-08-14
+### Added
+- Valor total no relatório de OS [@RamonSilva20](https://github.com/RamonSilva20).
+- Status alterado automaticamente para faturado [@Pr3d4dor](https://github.com/Pr3d4dor).
+- Exibir o nome do anexo na embaixo do thumbnail em anexos de OS [@Pr3d4dor](https://github.com/Pr3d4dor).
+
+### Changed
+- Atualização de biblioteca mPDF para versão 6.1 [@Pr3d4dor](https://github.com/Pr3d4dor).
+
+### Fixed
+- Correção de erro ao gerar relatório sem emitente estar configurado [@RamonSilva20](https://github.com/RamonSilva20).

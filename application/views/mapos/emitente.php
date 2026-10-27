@@ -1,362 +1,107 @@
+<?php
+/**
+ * Emitente (#2846): os dados da empresa que saem nas impressões, nos e-mails
+ * e no PIX, num formulário só, no padrão dos formulários da v5 (#2851).
+ *
+ * - Sem emitente cadastrado, o mesmo formulário cadastra; com, edita (o id
+ *   nunca vem do POST).
+ * - O logo é opcional (PNG, JPG ou BMP até 2 MB); enviar outro troca só o
+ *   arquivo dele.
+ * - O CEP preenche o endereço (módulo usuarios/formulario, o mesmo dos
+ *   clientes).
+ *
+ * @var object|null           $emitente
+ * @var array<string, string> $valores
+ * @var array<string, string> $erros
+ */
+$erroGeral = $erros['_geral'] ?? null;
+$errosDeCampo = array_diff_key($erros, ['_geral' => true]);
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$grade = 'mt-4 grid gap-4 sm:grid-cols-2';
+$campo = static fn (string $nome, array $props) => $props + [
+    'name' => $nome,
+    'value' => ($valores[$nome] ?? '') !== '' ? $valores[$nome] : null,
+    'error' => $errosDeCampo[$nome] ?? null,
+];
+$logo = (string) ($emitente->url_logo ?? '');
+?>
+<div class="flex max-w-4xl flex-col gap-4 pt-2 pb-8" <?= js_module('usuarios/formulario') ?>>
+    <header>
+        <h1 class="font-display text-heading-xl text-text">Emitente</h1>
+        <p class="text-caption text-muted">Os dados da sua empresa nas impressões de OS e vendas, nos e-mails e no PIX.</p>
+    </header>
 
-<?php if(!isset($dados) || $dados == null) {?>
-<div class="row-fluid" style="margin-top:0">
-    <div class="span12">
-        <div class="widget-box">
-            <div class="widget-title">
-                <span class="icon">
-                    <i class="icon-align-justify"></i>
-                </span>
-                <h5>Dados do Emitente</h5>
+    <?php if ($emitente === null) { ?>
+        <?= component('alert', ['variant' => 'info', 'message' => 'Nenhum emitente cadastrado ainda. Preencha os dados para as impressões e o PIX saírem completos.']) ?>
+    <?php } ?>
+    <?php if ($erroGeral !== null) { ?>
+        <?= component('alert', ['variant' => 'danger', 'message' => $erroGeral]) ?>
+    <?php } elseif ($errosDeCampo !== []) { ?>
+        <?= component('alert', ['variant' => 'danger', 'message' => count($errosDeCampo) === 1 ? 'Confira o campo destacado.' : 'Confira os ' . count($errosDeCampo) . ' campos destacados.']) ?>
+    <?php } ?>
+
+    <form method="post" action="<?= e(site_url('mapos/emitente')) ?>" enctype="multipart/form-data" novalidate class="flex flex-col gap-4" <?= js_module('formulario/padrao') ?>>
+        <input type="hidden" name="<?= e($this->security->get_csrf_token_name()) ?>" value="<?= e($this->security->get_csrf_hash()) ?>">
+
+        <section class="<?= e($caixa) ?>" aria-labelledby="secao-empresa">
+            <h2 id="secao-empresa" class="text-heading-sm text-text">Empresa</h2>
+            <div class="<?= e($grade) ?>">
+                <div class="sm:col-span-2">
+                    <?= component('input', $campo('nome', ['label' => 'Razão social', 'required' => true, 'autocomplete' => 'organization', 'attrs' => ['maxlength' => 255, 'data-msg-vazio' => 'Informe a razão social.']])) ?>
+                </div>
+                <?= component('input', $campo('cnpj', ['label' => 'CNPJ ou CPF', 'required' => true, 'attrs' => ['data-mascara' => 'documento', 'maxlength' => 45, 'data-msg-vazio' => 'Informe o CNPJ ou CPF.']])) ?>
+                <?= component('input', $campo('ie', ['label' => 'Inscrição estadual', 'attrs' => ['maxlength' => 50]])) ?>
+                <?= component('input', $campo('telefone', ['label' => 'Telefone', 'type' => 'tel', 'required' => true, 'autocomplete' => 'tel', 'attrs' => ['data-mascara' => 'telefone', 'maxlength' => 20, 'data-msg-vazio' => 'Informe o telefone.']])) ?>
+                <?= component('input', $campo('email', ['label' => 'E-mail', 'type' => 'email', 'required' => true, 'autocomplete' => 'email', 'help' => 'Remetente dos e-mails do sistema.', 'attrs' => ['maxlength' => 255, 'data-msg-vazio' => 'Informe o e-mail.']])) ?>
             </div>
-            <div class="widget-content ">
-                <div class="alert alert-danger">Nenhum dado foi cadastrado até o momento. Essas informações 
-                estarão disponíveis na tela de impressão de OS.</div>
-                <a href="#modalCadastrar" data-toggle="modal" role="button" class="btn btn-success">Cadastrar Dados</a>
+        </section>
+
+        <section class="<?= e($caixa) ?>" aria-labelledby="secao-endereco">
+            <h2 id="secao-endereco" class="text-heading-sm text-text">Endereço</h2>
+            <p class="mt-0.5 text-caption text-muted">Digite o CEP para preencher o resto.</p>
+            <div class="<?= e($grade) ?>">
+                <?= component('input', $campo('cep', ['label' => 'CEP', 'required' => true, 'autocomplete' => 'postal-code', 'attrs' => ['data-mascara' => 'cep', 'inputmode' => 'numeric', 'maxlength' => 9, 'data-msg-vazio' => 'Informe o CEP.']])) ?>
+                <div class="hidden sm:block" aria-hidden="true"></div>
+                <?= component('input', $campo('rua', ['label' => 'Rua', 'required' => true, 'autocomplete' => 'address-line1', 'attrs' => ['maxlength' => 70, 'data-msg-vazio' => 'Informe a rua.']])) ?>
+                <?= component('input', $campo('numero', ['label' => 'Número', 'required' => true, 'attrs' => ['maxlength' => 15, 'data-msg-vazio' => 'Informe o número.']])) ?>
+                <?= component('input', $campo('bairro', ['label' => 'Bairro', 'required' => true, 'attrs' => ['maxlength' => 45, 'data-msg-vazio' => 'Informe o bairro.']])) ?>
+                <div class="grid grid-cols-[minmax(0,1fr)_7rem] gap-4">
+                    <?= component('input', $campo('cidade', ['label' => 'Cidade', 'required' => true, 'autocomplete' => 'address-level2', 'attrs' => ['maxlength' => 45, 'data-msg-vazio' => 'Informe a cidade.']])) ?>
+                    <?= component('select', [
+                        'name' => 'estado',
+                        'label' => 'UF',
+                        'required' => true,
+                        'placeholder' => '—',
+                        'options' => array_combine(array_keys(ufsDoBrasil()), array_keys(ufsDoBrasil())),
+                        'selected' => $valores['estado'] !== '' ? strtoupper($valores['estado']) : null,
+                        'error' => $errosDeCampo['estado'] ?? null,
+                        'attrs' => ['data-msg-vazio' => 'Escolha a UF.'],
+                    ]) ?>
+                </div>
             </div>
-        </div>    
-        
-    </div>
-</div>   
+        </section>
 
-
-<div id="modalCadastrar" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <form action="<?php echo base_url(); ?>index.php/mapos/cadastrarEmitente" id="formCadastrar" enctype="multipart/form-data" method="post" class="form-horizontal" >
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="myModalLabel">MapOS - Cadastrar Dados do Emitente</h3>
-  </div>
-  <div class="modal-body">
-        
-        
-                    <div class="control-group">
-                        <label for="nome" class="control-label">Razão Social<span class="required">*</span></label>
-                        <div class="controls">
-                            <input id="nome" type="text" name="nome" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="cnpj" class="control-label"><span class="required">CNPJ*</span></label>
-                        <div class="controls">
-                            <input class="" type="text" name="cnpj" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">IE*</span></label>
-                        <div class="controls">
-                            <input type="text" name="ie" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Logradouro*</span></label>
-                        <div class="controls">
-                            <input type="text" name="logradouro" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Número*</span></label>
-                        <div class="controls">
-                            <input type="text" name="numero" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Bairro*</span></label>
-                        <div class="controls">
-                            <input type="text" name="bairro" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Cidade*</span></label>
-                        <div class="controls">
-                            <input type="text" name="cidade" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">UF*</span></label>
-                        <div class="controls">
-                            <input type="text" name="uf" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Telefone*</span></label>
-                        <div class="controls">
-                            <input type="text" name="telefone" value=""  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">E-mail*</span></label>
-                        <div class="controls">
-                            <input type="text" name="email" value="" />
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="logo" class="control-label"><span class="required">Logomarca*</span></label>
-                        <div class="controls">
-                            <input type="file" name="userfile" value="" />
-                        </div>
-                    </div>
-               
-
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true" id="btnCancelExcluir">Cancelar</button>
-    <button class="btn btn-success">Cadastrar</button>
-  </div>
-  </form>
-</div>
-
-<?php } else { ?>
-
-<div class="row-fluid" style="margin-top:0">
-    <div class="span12">
-        <div class="widget-box">
-            <div class="widget-title">
-                <span class="icon">
-                    <i class="icon-align-justify"></i>
-                </span>
-                <h5>Dados do Emitente</h5>
+        <section class="<?= e($caixa) ?>" aria-labelledby="secao-logo">
+            <h2 id="secao-logo" class="text-heading-sm text-text">Logo</h2>
+            <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start">
+                <?php if ($logo !== '') { ?>
+                    <img src="<?= e($logo) ?>" alt="Logo atual do emitente" class="h-24 w-auto max-w-56 shrink-0 rounded-md border border-border bg-field object-contain p-2">
+                <?php } ?>
+                <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <label for="emitente-logo" class="text-label-md text-text"><?= e($logo !== '' ? 'Trocar o logo' : 'Logo') ?></label>
+                    <input type="file" id="emitente-logo" name="userfile" accept=".png,.jpg,.jpeg,.bmp"
+                           aria-describedby="emitente-logo-ajuda<?= isset($errosDeCampo['userfile']) ? ' emitente-logo-erro' : '' ?>"<?= isset($errosDeCampo['userfile']) ? ' aria-invalid="true"' : '' ?>
+                           class="block w-full rounded-sm border border-input bg-field px-3 py-2 text-body-md text-text file:mr-3 file:rounded-sm file:border-0 file:bg-surface-subtle file:px-3 file:py-1 file:text-label-md file:text-text focus:outline-3 focus:outline-offset-0 focus:outline-ring">
+                    <p id="emitente-logo-ajuda" class="text-caption text-muted">Opcional. PNG, JPG ou BMP, até 2 MB. Sai no topo das impressões.</p>
+                    <?php if (isset($errosDeCampo['userfile'])) { ?>
+                        <p id="emitente-logo-erro" class="text-caption text-danger-ink"><?= e($errosDeCampo['userfile']) ?></p>
+                    <?php } ?>
+                </div>
             </div>
-            <div class="widget-content ">
-            <div class="alert alert-info">Os dados abaixo serão utilizados no cabeçalho das telas de impressão.</div>
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <td style="width: 25%"><img src=" <?php echo $dados[0]->url_logo; ?> "></td>
-                            <td> <span style="font-size: 20px; "> <?php echo $dados[0]->nome; ?> </span> </br><span><?php echo $dados[0]->cnpj; ?> </br> <?php echo $dados[0]->rua.', nº:'.$dados[0]->numero.', '.$dados[0]->bairro.' - '.$dados[0]->cidade.' - '.$dados[0]->uf; ?> </span> </br> <span> E-mail: <?php echo $dados[0]->email.' - Fone: '.$dados[0]->telefone; ?></span></td>
-                        </tr>
-                    </tbody>
-                </table>
+        </section>
 
-                <a href="#modalAlterar" data-toggle="modal" role="button" class="btn btn-primary">Alterar Dados</a>
-                <a href="#modalLogo" data-toggle="modal" role="button" class="btn btn-inverse">Alterar Logo</a>
-            </div>
+        <div class="flex justify-end">
+            <?= component('button', ['label' => $emitente === null ? 'Cadastrar emitente' : 'Salvar alterações', 'icon' => 'save', 'type' => 'submit', 'attrs' => ['data-rotulo-carregando' => 'Salvando…']]) ?>
         </div>
-    </div>
+    </form>
 </div>
-
-
-
-
-<div id="modalAlterar" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <form action="<?php echo base_url(); ?>index.php/mapos/editarEmitente" id="formAlterar" enctype="multipart/form-data" method="post" class="form-horizontal" >
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="">MapOS - Editar Dados do Emitente</h3>
-  </div>
-  <div class="modal-body">
-        
-        
-                    <div class="control-group">
-                        <label for="nome" class="control-label">Razão Social<span class="required">*</span></label>
-                        <div class="controls">
-                            <input id="nome" type="text" name="nome" value="<?php echo $dados[0]->nome; ?>"  />
-                            <input id="nome" type="hidden" name="id" value="<?php echo $dados[0]->id; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="cnpj" class="control-label"><span class="required">CNPJ*</span></label>
-                        <div class="controls">
-                            <input class="" type="text" name="cnpj" value="<?php echo $dados[0]->cnpj; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">IE*</span></label>
-                        <div class="controls">
-                            <input type="text" name="ie" value="<?php echo $dados[0]->ie; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Logradouro*</span></label>
-                        <div class="controls">
-                            <input type="text" name="logradouro" value="<?php echo $dados[0]->rua; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Número*</span></label>
-                        <div class="controls">
-                            <input type="text" name="numero" value="<?php echo $dados[0]->numero; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Bairro*</span></label>
-                        <div class="controls">
-                            <input type="text" name="bairro" value="<?php echo $dados[0]->bairro; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Cidade*</span></label>
-                        <div class="controls">
-                            <input type="text" name="cidade" value="<?php echo $dados[0]->cidade; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">UF*</span></label>
-                        <div class="controls">
-                            <input type="text" name="uf" value="<?php echo $dados[0]->uf; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">Telefone*</span></label>
-                        <div class="controls">
-                            <input type="text" name="telefone" value="<?php echo $dados[0]->telefone; ?>"  />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label for="descricao" class="control-label"><span class="required">E-mail*</span></label>
-                        <div class="controls">
-                            <input type="text" name="email" value="<?php echo $dados[0]->email; ?>" />
-                        </div>
-                    </div>
-
-    
-               
-
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true" id="btnCancelExcluir">Cancelar</button>
-    <button class="btn btn-primary">Alterar</button>
-  </div>
-  </form>
-</div>
-
-
-<div id="modalLogo" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <form action="<?php echo base_url(); ?>index.php/mapos/editarLogo" id="formLogo" enctype="multipart/form-data" method="post" class="form-horizontal" >
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-    <h3 id="">MapOS - Alterar Logomarca</h3>
-  </div>
-  <div class="modal-body">
-         <div class="span12 alert alert-info">Selecione uma nova imagem da logomarca. Tamanho indicado (130 X 130).</div>          
-         <div class="control-group">
-            <label for="logo" class="control-label"><span class="required">Logomarca*</span></label>
-            <div class="controls">
-                <input type="file" name="userfile" value="" />
-                <input id="nome" type="hidden" name="id" value="<?php echo $dados[0]->id; ?>"  />
-            </div>
-        </div>
-
-  </div>
-  <div class="modal-footer">
-    <button class="btn" data-dismiss="modal" aria-hidden="true" id="btnCancelExcluir">Cancelar</button>
-    <button class="btn btn-primary">Alterar</button>
-  </div>
-  </form>
-</div>
-
-
-
-<?php } ?>
-
-
-<script type="text/javascript" src="<?php echo base_url()?>js/jquery.validate.js"></script>
-<script type="text/javascript">
-    
-$(document).ready(function(){
-
-    $("#formLogo").validate({
-      rules:{
-         userfile: {required:true}
-      },
-      messages:{
-         userfile: {required: 'Campo Requerido.'}
-      },
-
-        errorClass: "help-inline",
-        errorElement: "span",
-        highlight:function(element, errorClass, validClass) {
-            $(element).parents('.control-group').addClass('error');
-            $(element).parents('.control-group').removeClass('success');
-        },
-        unhighlight: function(element, errorClass, validClass) {
-            $(element).parents('.control-group').removeClass('error');
-            $(element).parents('.control-group').addClass('success');
-        }
-   });
-
-
-    $("#formCadastrar").validate({
-      rules:{
-         userfile: {required:true},
-         nome: {required:true},
-         cnpj: {required:true},
-         ie: {required:true},
-         logradouro: {required:true},
-         numero: {required:true},
-         bairro: {required:true},
-         cidade: {required:true},
-         uf: {required:true},
-         telefone: {required:true},
-         email: {required:true}
-      },
-      messages:{
-         userfile: {required: 'Campo Requerido.'},
-         nome: {required: 'Campo Requerido.'},
-         cnpj: {required: 'Campo Requerido.'},
-         ie: {required: 'Campo Requerido.'},
-         logradouro: {required: 'Campo Requerido.'},
-         numero: {required:'Campo Requerido.'},
-         bairro: {required:'Campo Requerido.'},
-         cidade: {required:'Campo Requerido.'},
-         uf: {required:'Campo Requerido.'},
-         telefone: {required:'Campo Requerido.'},
-         email: {required:'Campo Requerido.'}
-      },
-
-        errorClass: "help-inline",
-        errorElement: "span",
-        highlight:function(element, errorClass, validClass) {
-            $(element).parents('.control-group').addClass('error');
-            $(element).parents('.control-group').removeClass('success');
-        },
-        unhighlight: function(element, errorClass, validClass) {
-            $(element).parents('.control-group').removeClass('error');
-            $(element).parents('.control-group').addClass('success');
-        }
-   });
-
-
-    $("#formAlterar").validate({
-      rules:{
-         userfile: {required:true},
-         nome: {required:true},
-         cnpj: {required:true},
-         ie: {required:true},
-         logradouro: {required:true},
-         numero: {required:true},
-         bairro: {required:true},
-         cidade: {required:true},
-         uf: {required:true},
-         telefone: {required:true},
-         email: {required:true}
-      },
-      messages:{
-         userfile: {required: 'Campo Requerido.'},
-         nome: {required: 'Campo Requerido.'},
-         cnpj: {required: 'Campo Requerido.'},
-         ie: {required: 'Campo Requerido.'},
-         logradouro: {required: 'Campo Requerido.'},
-         numero: {required:'Campo Requerido.'},
-         bairro: {required:'Campo Requerido.'},
-         cidade: {required:'Campo Requerido.'},
-         uf: {required:'Campo Requerido.'},
-         telefone: {required:'Campo Requerido.'},
-         email: {required:'Campo Requerido.'}
-      },
-
-        errorClass: "help-inline",
-        errorElement: "span",
-        highlight:function(element, errorClass, validClass) {
-            $(element).parents('.control-group').addClass('error');
-            $(element).parents('.control-group').removeClass('success');
-        },
-        unhighlight: function(element, errorClass, validClass) {
-            $(element).parents('.control-group').removeClass('error');
-            $(element).parents('.control-group').addClass('success');
-        }
-   });
-
-});
-    
-</script>

@@ -1,0 +1,37 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+# production
+/install/files
+/docker/data
+
+# misc
+.DS_Store
+.vscode
+.phpunit.cache/
+.phpunit.result.cache
+
+/vendor/
+/application/vendor/
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+!blank/.gitkeep
+desktop.ini
+
+application/vendor/
+vendor/
+# As libs de JS copiadas pelo npm run build:vendor são commitadas (#2837).
+!/assets/vendor/
+node_modules/
+.idea/
+.php_cs.cache
+.php-cs-fixer.cache
+application/logs/*
+ci_sessions/
+
+uploads
+application/.env
+assets/userImage
+application/storage/

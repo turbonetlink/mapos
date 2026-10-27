@@ -1,4 +1,8 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
+
+if (! defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
 /*
 | -------------------------------------------------------------------------
 | Hooks
@@ -10,7 +14,39 @@
 |
 */
 
+// compress output
+$hook['display_override'][] = [
+    'class' => '',
+    'function' => 'compress',
+    'filename' => 'compress.php',
+    'filepath' => 'hooks',
+];
 
+// Cabeçalhos de segurança e CSP em report-only (#2867). Ver
+// docs/cabecalhos-de-seguranca.md.
+$hook['pre_system'][] = [
+    'class' => '',
+    'function' => 'enviarCabecalhosSeguranca',
+    'filename' => 'security_headers.php',
+    'filepath' => 'hooks',
+];
+
+// Página de erro 500 para exceção não tratada em produção (#2849). Antes do
+// Whoops: se ele estiver habilitado (development), o handler dele vence.
+$hook['pre_system'][] = [
+    'class' => '',
+    'function' => 'registrarPaginaDeErro',
+    'filename' => 'pagina_de_erro.php',
+    'filepath' => 'hooks',
+];
+
+$hook['pre_system'][] = [
+    'class' => 'WhoopsHook',
+    'function' => 'bootWhoops',
+    'filename' => 'whoops.php',
+    'filepath' => 'hooks',
+    'params' => [],
+];
 
 /* End of file hooks.php */
 /* Location: ./application/config/hooks.php */

@@ -1,85 +1,42 @@
-  <head>
-    <title>MAPOS</title>
-    <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/bootstrap-responsive.min.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/fullcalendar.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/main.css" />
-    <link rel="stylesheet" href="<?php echo base_url();?>css/blue.css" class="skin-color" />
-    <script type="text/javascript"  src="<?php echo base_url();?>js/jquery-1.10.2.min.js"></script>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>
-
-  <body style="background-color: transparent">
-
-
-
-      <div class="container-fluid">
-
-          <div class="row-fluid">
-              <div class="span12">
-
-                  <div class="widget-box">
-                      <div class="widget-title">
-                          <h4 style="text-align: center">Ordens de Serviço</h4>
-                      </div>
-                      <div class="widget-content nopadding">
-
-                  <table class="table table-bordered">
-                      <thead>
-                          <tr>
-                              <th style="font-size: 1.2em; padding: 5px;">Cliente</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Status</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Data</th>
-                              <th style="font-size: 1.2em; padding: 5px;">Descrição</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          <?php
-                          foreach ($os as $c) {
-
-                              echo '<tr>';
-                              echo '<td>' . $c->nomeCliente . '</td>';
-                              echo '<td>' . $c->status . '</td>';
-                              echo '<td>' . date('d/m/Y',  strtotime($c->dataInicial)) . '</td>';
-                              echo '<td>' . $c->descricaoProduto. '</td>';
-                              echo '</tr>';
-                          }
-                          ?>
-                      </tbody>
-                  </table>
-
-                  </div>
-
-              </div>
-                  <h5 style="text-align: right">Data do Relatório: <?php echo date('d/m/Y');?></h5>
-
-          </div>
-
-
-
-      </div>
-</div>
-
-
-
-
-            <!-- Arquivos js-->
-
-            <script src="<?php echo base_url();?>js/excanvas.min.js"></script>
-            <script src="<?php echo base_url();?>js/bootstrap.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.flot.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.flot.resize.min.js"></script>
-            <script src="<?php echo base_url();?>js/jquery.peity.min.js"></script>
-            <script src="<?php echo base_url();?>js/fullcalendar.min.js"></script>
-            <script src="<?php echo base_url();?>js/sosmc.js"></script>
-            <script src="<?php echo base_url();?>js/dashboard.js"></script>
-  </body>
-</html>
-
-
-
-
-
-
-
+<?php $this->load->view('relatorios/imprimir/partes/inicio', ['tituloDoc' => ucfirst($title)]); ?>
+    <table class="rel-tabela">
+        <thead>
+            <tr>
+                <th class="rel-th">OS</th>
+                <th class="rel-th">Cliente</th>
+                <th class="rel-th">Status</th>
+                <th class="rel-th">Data</th>
+                <th class="rel-th">Descrição</th>
+                <th class="rel-th">Total produtos</th>
+                <th class="rel-th">Total serviços</th>
+                <th class="rel-th">Total</th>
+                <th class="rel-th">Desconto</th>
+                <th class="rel-th">Total com desconto</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($os as $c) : ?>
+                <tr>
+                    <td class="rel-td text-center"><?= e($c->idOs) ?></td>
+                    <td class="rel-td"><?= e($c->nomeCliente) ?></td>
+                    <td class="rel-td text-center"><?= e($c->status) ?></td>
+                    <td class="rel-td text-center"><?= e(date('d/m/Y', strtotime($c->dataInicial))) ?></td>
+                    <td class="rel-td"><?= printSafeHtml($c->descricaoProduto, true) ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($c->total_produto, 2, ',', '.') ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($c->total_servico, 2, ',', '.') ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($c->total_produto + $c->total_servico, 2, ',', '.') ?></td>
+                    <td class="rel-td text-center"><?= e(($c->tipo_desconto == 'real' ? 'R$ ' : '') . $c->desconto . ($c->tipo_desconto == 'porcento' ? ' %' : '')) ?></td>
+                    <td class="rel-td text-center">R$: <?= number_format($c->valor_desconto != 0 ? $c->valor_desconto : $c->total_produto + $c->total_servico, 2, ',', '.') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <tr>
+                <td class="rel-total" colspan="5"></td>
+                <td class="rel-total text-center">R$: <?= number_format($total_produtos, 2, ',', '.') ?></td>
+                <td class="rel-total text-center">R$: <?= number_format($total_servicos, 2, ',', '.') ?></td>
+                <td class="rel-total text-center">R$: <?= number_format($total_produtos + $total_servicos, 2, ',', '.') ?></td>
+                <td class="rel-total"></td>
+                <td class="rel-total text-center">R$: <?= number_format($total_geral, 2, ',', '.') ?></td>
+            </tr>
+        </tbody>
+    </table>
+<?php $this->load->view('relatorios/imprimir/partes/fim'); ?>

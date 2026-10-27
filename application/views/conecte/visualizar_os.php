@@ -1,205 +1,100 @@
-<?php $totalServico = 0; $totalProdutos = 0;?>
-<div class="row-fluid" style="margin-top: 0">
-    <div class="span12">
-        <div class="widget-box">
-            <div class="widget-title">
-                <span class="icon">
-                    <i class="icon-tags"></i>
-                </span>
-                <h5>Ordem de Serviço</h5>
-                <div class="buttons">
-                    
-                    <a id="imprimir" title="Imprimir" class="btn btn-mini btn-inverse" href=""><i class="icon-print icon-white"></i> Imprimir</a>
-                </div>
-            </div>
-            <div class="widget-content" id="printOs">
-                <div class="invoice-content">
-                    <div class="invoice-head" style="margin-bottom: 0">
+<?php
+/**
+ * OS do cliente (#2848): substitui as telas visualizar_os e detalhes_os da
+ * v4. Só leitura: status, valores em kpi-card, dados e textos da OS,
+ * produtos e serviços (os/partes/*, sem as ações do painel), anexos e o PIX.
+ *
+ * @var object      $os
+ * @var array       $totais
+ * @var list<object> $produtos
+ * @var list<object> $servicos
+ * @var list<object> $anexos
+ * @var string|null $garantia_ate
+ * @var array|null  $pix
+ */
+$idOs = (int) $os->idOs;
+$caixa = 'rounded-xl border border-border bg-surface p-4 sm:p-6';
+$campos = static fn (array $itens) => array_filter($itens, static fn ($valor) => $valor !== null && $valor !== '');
 
-                        <table class="table">
-                            <tbody>
-                                <?php if($emitente == null) {?>
-                                            
-                                <tr>
-                                    <td colspan="3" class="alert">Os dados do emitente não foram configurados.</td>
-                                </tr>
-                                <?php } else {?>
-                                <tr>
-                                    <td style="width: 25%"><img src=" <?php echo $emitente[0]->url_logo; ?> "></td>
-                                    <td> <span style="font-size: 20px; "> <?php echo $emitente[0]->nome; ?></span> </br><span><?php echo $emitente[0]->cnpj; ?> </br> <?php echo $emitente[0]->rua.', nº:'.$emitente[0]->numero.', '.$emitente[0]->bairro.' - '.$emitente[0]->cidade.' - '.$emitente[0]->uf; ?> </span> </br> <span> E-mail: <?php echo $emitente[0]->email.' - Fone: '.$emitente[0]->telefone; ?></span></td>
-                                    <td style="width: 18%; text-align: center">#Protocolo: <span ><?php echo $result->idOs?></span></br> </br> <span>Emissão: <?php echo date('d/m/Y')?></span></td>
-                                </tr>
+$dados = $campos([
+    'Entrada' => dataBr($os->dataInicial),
+    'Previsão de entrega' => dataBr($os->dataFinal),
+    'Técnico responsável' => (string) $os->nome,
+    'Garantia' => (int) $os->garantia > 0
+        ? (int) $os->garantia . ' dias' . ($garantia_ate ? ($garantia_ate >= date('Y-m-d') ? ', até ' : ', venceu em ') . dataBr($garantia_ate) : ', a partir da entrega')
+        : null,
+]);
 
-                                <?php } ?>
-                            </tbody>
-                        </table>
-
-                
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <td style="width: 50%; padding-left: 0">
-                                        <ul>
-                                            <li>
-                                                <span><h5>Cliente</h5>
-                                                <span><?php echo $result->nomeCliente?></span><br/>
-                                                <span><?php echo $result->rua?>, <?php echo $result->numero?>, <?php echo $result->bairro?></span><br/>
-                                                <span><?php echo $result->cidade?> - <?php echo $result->estado?></span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                    <td style="width: 50%; padding-left: 0">
-                                        <ul>
-                                            <li>
-                                                <span><h5>Responsável</h5></span>
-                                                <span><?php echo $result->nome?></span> <br/>
-                                                <span>Telefone: <?php echo $result->telefone?></span><br/>
-                                                <span>Email: <?php echo $result->email?></span>
-                                            </li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table> 
-      
-                    </div>
-
-                    <div style="margin-top: 0; padding-top: 0">
-
-                    <?php if($result->descricaoProduto != null){?>
-                    <hr style="margin-top: 0">
-                    <h5>Descrição</h5>
-                    <p>
-                        <?php echo $result->descricaoProduto?>
-                        
-                    </p>
-                    <?php }?>
-
-                    <?php if($result->defeito != null){?>
-                    <hr style="margin-top: 0">
-                    <h5>Defeito</h5>
-                    <p>
-                        <?php echo $result->defeito?>
-                    </p>
-                    <?php }?>
-                    <?php if($result->laudoTecnico != null){?>
-                    <hr style="margin-top: 0">
-                    <h5>Laudo Técnico</h5>
-                    <p>
-                        <?php echo $result->laudoTecnico?>
-                    </p>
-                    <?php }?>
-                    <?php if($result->observacoes != null){?>
-                    <hr style="margin-top: 0">
-                    <h5>Observações</h5>
-                    <p>
-                        <?php echo $result->observacoes?>
-                    </p>
-                    <?php }?>
-
-                        <?php if($produtos != null){?>
-                        <br />
-                        <table class="table table-bordered" id="tblProdutos">
-                                    <thead>
-                                        <tr>
-                                            <th>Produto</th>
-                                            <th>Quantidade</th>
-                                            <th>Sub-total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        
-                                        foreach ($produtos as $p) {
-
-                                            $totalProdutos = $totalProdutos + $p->subTotal;
-                                            echo '<tr>';
-                                            echo '<td>'.$p->descricao.'</td>';
-                                            echo '<td>'.$p->quantidade.'</td>';
-                                            
-                                            echo '<td>R$ '.number_format($p->subTotal,2,',','.').'</td>';
-                                            echo '</tr>';
-                                        }?>
-
-                                        <tr>
-                                            <td colspan="2" style="text-align: right"><strong>Total:</strong></td>
-                                            <td><strong>R$ <?php echo number_format($totalProdutos,2,',','.');?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                               <?php }?>
-                        
-                        <?php if($servicos != null){?>
-                        <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Serviço</th>
-                                                <th>Sub-total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                        setlocale(LC_MONETARY, 'en_US');
-                                        foreach ($servicos as $s) {
-                                            $preco = $s->preco;
-                                            $totalServico = $totalServico + $preco;
-                                            echo '<tr>';
-                                            echo '<td>'.$s->nome.'</td>';
-                                            echo '<td>R$ '.number_format($s->preco, 2, ',', '.').'</td>';
-                                            echo '</tr>';
-                                        }?>
-
-                                        <tr>
-                                            <td colspan="1" style="text-align: right"><strong>Total:</strong></td>
-                                            <td><strong>R$ <?php  echo number_format($totalServico, 2, ',', '.');?></strong></td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                        <?php }?>
-                        <hr />
-                    
-                        <h4 style="text-align: right">Valor Total: R$ <?php echo number_format($totalProdutos + $totalServico,2,',','.');?></h4>
-
-                    </div>
-            
-
-                    
-                    
-              
-                </div>
-            </div>
-        </div>
+$textos = $campos([
+    'Equipamento ou serviço' => trim(strip_tags((string) $os->descricaoProduto)) !== '' ? osTextoExibicao($os->descricaoProduto) : null,
+    'Defeito informado' => trim(strip_tags((string) $os->defeito)) !== '' ? osTextoExibicao($os->defeito) : null,
+    'Observações' => trim(strip_tags((string) $os->observacoes)) !== '' ? osTextoExibicao($os->observacoes) : null,
+    'Laudo técnico' => trim(strip_tags((string) $os->laudoTecnico)) !== '' ? osTextoExibicao($os->laudoTecnico) : null,
+]);
+?>
+<div class="flex flex-col gap-4">
+    <div>
+        <?= component('button', ['label' => 'Ordens de serviço', 'icon' => 'chevron-left', 'variant' => 'ghost', 'size' => 'sm', 'href' => site_url('mine/os'), 'class' => '-ml-3']) ?>
     </div>
+
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="font-display text-heading-xl text-text"><?= e('OS #' . $idOs) ?></h1>
+                <?= component('pill-status', osStatusPill($os->status)) ?>
+            </div>
+            <p class="text-caption text-muted"><?= e('Aberta em ' . dataBr($os->dataInicial)) ?></p>
+        </div>
+        <?= component('button', ['label' => 'Imprimir', 'icon' => 'printer', 'variant' => 'outline', 'href' => site_url('mine/imprimirOs/' . $idOs), 'attrs' => ['target' => '_blank', 'rel' => 'noopener']]) ?>
+    </header>
+
+    <?php // Uma coluna no celular: em duas, o valor em reais não cabe na linha do kpi-card.?>
+    <div class="grid gap-4 sm:grid-cols-3">
+        <?= component('kpi-card', ['label' => 'Produtos', 'value' => dinheiro($totais['produtos']), 'icon' => 'package']) ?>
+        <?= component('kpi-card', ['label' => 'Serviços', 'value' => dinheiro($totais['servicos']), 'icon' => 'wrench']) ?>
+        <?= component('kpi-card', ['label' => 'Total', 'value' => dinheiro($totais['total']), 'icon' => 'circle-dollar-sign', 'caption' => $totais['desconto'] > 0 ? 'Com ' . dinheiro($totais['desconto']) . ' de desconto' : null]) ?>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+        <section class="<?= e($caixa) ?>" aria-labelledby="secao-dados">
+            <h2 id="secao-dados" class="text-heading-sm text-text">Dados da OS</h2>
+            <dl class="mt-3 flex flex-col gap-3">
+                <?php foreach ($dados as $rotulo => $valor) { ?>
+                    <div>
+                        <dt class="text-caption text-muted"><?= e($rotulo) ?></dt>
+                        <dd class="text-body-md [overflow-wrap:anywhere] text-text"><?= e($valor) ?></dd>
+                    </div>
+                <?php } ?>
+            </dl>
+        </section>
+        <section class="<?= e($caixa) ?> lg:col-span-2" aria-labelledby="secao-equipamento">
+            <h2 id="secao-equipamento" class="text-heading-sm text-text">Equipamento e serviço</h2>
+            <?php if ($textos === []) { ?>
+                <p class="mt-3 text-caption text-muted">A assistência ainda não preencheu os detalhes desta OS.</p>
+            <?php } else { ?>
+                <dl class="mt-3 grid gap-4 sm:grid-cols-2">
+                    <?php foreach ($textos as $rotulo => $valor) { ?>
+                        <div>
+                            <dt class="text-caption text-muted"><?= e($rotulo) ?></dt>
+                            <dd class="text-body-md [overflow-wrap:anywhere] text-text"><?= componenteConteudo($valor) ?></dd>
+                        </div>
+                    <?php } ?>
+                </dl>
+            <?php } ?>
+        </section>
+    </div>
+
+    <section class="flex flex-col gap-3" aria-labelledby="secao-produtos">
+        <h2 id="secao-produtos" class="text-heading-sm text-text">Produtos</h2>
+        <?php $this->load->view('os/partes/produtos'); ?>
+    </section>
+
+    <section class="flex flex-col gap-3" aria-labelledby="secao-servicos">
+        <h2 id="secao-servicos" class="text-heading-sm text-text">Serviços</h2>
+        <?php $this->load->view('os/partes/servicos'); ?>
+    </section>
+
+    <?php $this->load->view('conecte/partes/anexos'); ?>
+
+    <?php $this->load->view('conecte/partes/pix'); ?>
 </div>
-
-<script type="text/javascript">
-    $(document).ready(function(){
-        $("#imprimir").click(function(){         
-            PrintElem('#printOs');
-        })
-
-        function PrintElem(elem)
-        {
-            Popup($(elem).html());
-        }
-
-        function Popup(data)
-        {
-            var mywindow = window.open('', 'MapOs', 'height=600,width=800');
-            mywindow.document.write('<html><head><title>Map Os</title>');
-            mywindow.document.write("<link rel='stylesheet' href='<?php echo base_url();?>assets/css/bootstrap.min.css' /><link rel='stylesheet' href='<?php echo base_url();?>assets/css/bootstrap-responsive.min.css' />");
-            mywindow.document.write("<link rel='stylesheet' href='<?php echo base_url();?>assets/css/matrix-style.css' /> <link rel='stylesheet' href='<?php echo base_url();?>assets/css/matrix-media.css' />");
-
-
-            mywindow.document.write('</head><body >');
-            mywindow.document.write(data);
-            mywindow.document.write('</body></html>');
-
-            mywindow.print();
-            mywindow.close();
-
-            return true;
-        }
-
-    });
-</script>

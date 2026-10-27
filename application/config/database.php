@@ -1,27 +1,27 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-
-
+defined('BASEPATH') or exit('No direct script access allowed');
 
 $active_group = 'default';
-$active_record = TRUE;
-
-$db['default']['hostname'] = 'localhost'; 
-$db['default']['username'] = 'root';
-$db['default']['password'] = '';
-$db['default']['database'] = 'banco';
-$db['default']['dbdriver'] = 'mysql';
-$db['default']['dbprefix'] = '';
-$db['default']['pconnect'] = TRUE;
-$db['default']['db_debug'] = TRUE;
-$db['default']['cache_on'] = FALSE;
-$db['default']['cachedir'] = '';
-$db['default']['char_set'] = 'utf8';
-$db['default']['dbcollat'] = 'utf8_general_ci';
-$db['default']['swap_pre'] = '';
-$db['default']['autoinit'] = TRUE;
-$db['default']['stricton'] = FALSE;
-
-
-/* End of file database.php */
-/* Location: ./application/config/database.php */
+$query_builder = true;
+$db['default'] = [
+    'dsn' => $_ENV['DB_DSN'] ?? '',
+    'hostname' => $_ENV['DB_HOSTNAME'] ?? 'enter_hostname',
+    'username' => $_ENV['DB_USERNAME'] ?? 'enter_db_username',
+    'password' => $_ENV['DB_PASSWORD'] ?? 'enter_db_password',
+    'database' => $_ENV['DB_DATABASE'] ?? 'enter_database_name',
+    'dbdriver' => $_ENV['DB_DRIVER'] ?? 'mysqli',
+    'dbprefix' => $_ENV['DB_PREFIX'] ?? '',
+    'pconnect' => false,
+    'db_debug' => (ENVIRONMENT !== 'production'),
+    'cache_on' => false,
+    'cachedir' => '',
+    'char_set' => $_ENV['DB_CHARSET'] ?? 'utf8',
+    'dbcollat' => $_ENV['DB_COLLATION'] ?? 'utf8_general_ci',
+    'swap_pre' => '',
+    'encrypt' => false,
+    'compress' => false,
+    'stricton' => false,
+    'failover' => [],
+    'save_queries' => true,
+];
